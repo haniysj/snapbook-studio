@@ -1,0 +1,101 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useLang } from "@/lib/app-context";
+import { t } from "@/lib/i18n";
+import { useSettings } from "@/lib/app-context";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Check, ExternalLink, MessageCircle, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { whatsappUrl } from "@/lib/helpers";
+import { format } from "date-fns";
+
+export function BookingsTab() {
+  const { lang } = useLang();
+  const { settings } = useSettings();
+  const qc = useQueryClient();
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["admin_bookings"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("bookings")
+        .select("*, packages(name_ar, name_en, price, currency)")
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const setStatus = async (id: string, status: "pending" | "confirmed" | "cancelled") => {
+    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(lang === "ar" ? "تم التحديث" : "Updated");
+    qc.invalidateQueries({ queryKey: ["admin_bookings"] });
+    qc.invalidateQueries({ queryKey: ["booked_dates"] });
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm(lang === "ar" ? "حذف الحجز؟" : "Delete booking?")) return;
+    const { error } = await supabase.from("bookings").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["admin_bookings"] });
+    qc.invalidateQueries({ queryKey: ["booked_dates"] });
+  };
+
+  if (isLoading) return <div className="text-sm text-muted-foreground">{t(lang, "loading")}</div>;
+  if (rows.length === 0) return <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">{t(lang, "no_bookings")}</div>;
+
+  return (
+    <div className="space-y-3">
+      {rows.map((b: any) => {
+        const pkg = b.packages;
+        const waMsg = `${t(lang, "wa_confirm_msg")}\n\n${t(lang, "form_name")}: ${b.customer_name}\n${t(lang, "form_date")}: ${b.event_date} ${b.event_time}\n${t(lang, "form_package")}: ${pkg?.name_ar ?? ""}\n${b.event_location_url ? `📍 ${b.event_location_url}` : ""}`;
+        return (
+          <div key={b.id} className="card-elegant flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold">{b.customer_name}</span>
+                <StatusBadge status={b.status} />
+                <span className="text-xs text-muted-foreground" dir="ltr">{b.phone}</span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                📅 {format(new Date(b.event_date), "yyyy-MM-dd")} — 🕐 {b.event_time?.slice(0, 5)} — 📦 {pkg?.name_ar ?? "—"} ({pkg?.price} {pkg?.currency})
+              </div>
+              {b.event_location_url && (
+                <a href={b.event_location_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gold hover:underline">
+                  <ExternalLink className="h-3 w-3" /> {lang === "ar" ? "الموقع" : "Location"}
+                </a>
+              )}
+              {b.notes && <p className="text-xs text-muted-foreground">{b.notes}</p>}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {b.status !== "confirmed" && (
+                <Button size="sm" onClick={() => setStatus(b.id, "confirmed")} className="gap-1 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
+                  <Check className="h-3.5 w-3.5" /> {t(lang, "confirm")}
+                </Button>
+              )}
+              <a href={whatsappUrl(b.phone || settings.whatsapp_number, waMsg)} target="_blank" rel="noreferrer">
+                <Button size="sm" variant="outline" className="gap-1"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</Button>
+              </a>
+              {b.status !== "cancelled" && (
+                <Button size="sm" variant="outline" onClick={() => setStatus(b.id, "cancelled")} className="gap-1">
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => remove(b.id)} className="gap-1 text-destructive">
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const { lang } = useLang();
+  const map: Record<string, string> = { pending: "status_pending", confirmed: "status_confirmed", cancelled: "status_cancelled" };
+  const color = status === "confirmed" ? "bg-green-500/20 text-green-700 dark:text-green-300" : status === "cancelled" ? "bg-destructive/20 text-destructive" : "bg-muted";
+  return <Badge className={color} variant="secondary">{t(lang, map[status] as any)}</Badge>;
+}
