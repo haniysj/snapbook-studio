@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookingConfirmedIdRouteImport } from './routes/booking-confirmed.$id'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookRoute = BookRouteImport.update({
   id: '/book',
   path: '/book',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
 export interface FileRoutesById {
@@ -52,25 +60,45 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/book' | '/booking-confirmed/$id'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/book'
+    | '/sitemap.xml'
+    | '/booking-confirmed/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/book' | '/booking-confirmed/$id'
-  id: '__root__' | '/' | '/admin' | '/book' | '/booking-confirmed/$id'
+  to: '/' | '/admin' | '/book' | '/sitemap.xml' | '/booking-confirmed/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/book'
+    | '/sitemap.xml'
+    | '/booking-confirmed/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   BookRoute: typeof BookRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   BookingConfirmedIdRoute: typeof BookingConfirmedIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book': {
       id: '/book'
       path: '/book'
@@ -106,6 +134,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   BookRoute: BookRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   BookingConfirmedIdRoute: BookingConfirmedIdRoute,
 }
 export const routeTree = rootRouteImport
