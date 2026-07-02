@@ -30,7 +30,10 @@ export function BookingCalendar() {
   });
 
   const bookedDates = useMemo(
-    () => bookedRows.map((b: { event_date: string }) => toDate(b.event_date)),
+    () =>
+      (bookedRows as Array<{ event_date: string | null }>)
+        .filter((b): b is { event_date: string } => !!b.event_date)
+        .map((b) => toDate(b.event_date)),
     [bookedRows],
   );
   const bookedSet = useMemo(() => new Set(bookedDates.map(toKey)), [bookedDates]);
