@@ -68,12 +68,19 @@ function AdminPage() {
     );
   }
 
+  const adminUsername = emailToUsername(session?.user?.email);
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <div className="mx-auto max-w-6xl px-4 pt-6">
+        <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-sm gold-text font-semibold">
+          {t(lang, "welcome_back")}, {adminUsername} 👋
+        </div>
+      </div>
       <AdminDashboard />
     </div>
   );
+
 
   function LoginCard() {
     const [u, setU] = useState("");
