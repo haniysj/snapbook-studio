@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { publicMediaUrl } from "@/lib/helpers";
+import { MediaImage } from "@/components/site/MediaImage";
 import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
 
