@@ -3,7 +3,8 @@ import { Moon, Sun, Languages, LayoutDashboard, Camera } from "lucide-react";
 import { useLang, useSettings, useTheme } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
-import { publicMediaUrl } from "@/lib/helpers";
+import { MediaImage } from "@/components/site/MediaImage";
+
 
 export function Header() {
   const { theme, toggle: toggleTheme } = useTheme();
