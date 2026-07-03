@@ -20,6 +20,9 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   const { lang } = useLang();
+  const { settings } = useSettings();
+  const username = emailToUsername(undefined);
+
   const [session, setSession] = useState<import("@supabase/supabase-js").Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
