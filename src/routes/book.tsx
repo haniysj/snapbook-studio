@@ -126,15 +126,17 @@ function BookPage() {
               <div className="rounded-lg border border-border p-3">
                 <DayPicker
                   mode="single"
+                  weekStartsOn={0}
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   disabled={[{ before: new Date() }, ...bookedDates]}
-                  modifiers={{ booked: bookedDates }}
-                  modifiersClassNames={{ booked: "rdp-day-booked", selected: "rdp-day-selected-gold" }}
+                  modifiers={{ booked: bookedDates, weekend: { dayOfWeek: [5, 6] } }}
+                  modifiersClassNames={{ booked: "rdp-day-booked", selected: "rdp-day-selected-gold", weekend: "rdp-day-weekend" }}
                   locale={lang === "ar" ? arLocale : enUS}
                   dir={lang === "ar" ? "rtl" : "ltr"}
                 />
               </div>
+
             )}
           </div>
 
