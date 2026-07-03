@@ -103,7 +103,7 @@ export function GalleryCarousel() {
                 onClick={() => setIndex(i)}
                 className={`relative aspect-square overflow-hidden rounded-xl ring-1 transition ${i === index ? "ring-gold" : "ring-border hover:ring-gold/50"}`}
               >
-                <img src={publicMediaUrl(img.url)} alt="" className="h-full w-full object-cover" />
+                <MediaImage path={img.url} alt="" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
