@@ -14,8 +14,10 @@ import { toast } from "sonner";
 type Pkg = {
   id?: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
   price: number; currency: string; sort_order: number; active: boolean;
+  discounted_price: number | null; offer_expiry_date: string | null;
 };
-const empty: Pkg = { name_ar: "", name_en: "", description_ar: "", description_en: "", price: 0, currency: "OMR", sort_order: 0, active: true };
+const empty: Pkg = { name_ar: "", name_en: "", description_ar: "", description_en: "", price: 0, currency: "OMR", sort_order: 0, active: true, discounted_price: null, offer_expiry_date: null };
+
 
 export function PackagesTab() {
   const { lang } = useLang();
@@ -67,7 +69,17 @@ export function PackagesTab() {
               <div>
                 <h4 className="font-semibold">{p.name_ar}</h4>
                 <p className="text-xs text-muted-foreground">{p.description_ar}</p>
-                <p className="mt-1 text-sm gold-text font-bold">{Number(p.price).toLocaleString()} {p.currency}</p>
+                <p className="mt-1 text-sm gold-text font-bold">
+                  {p.discounted_price != null ? (
+                    <>
+                      {Number(p.discounted_price).toLocaleString()} {p.currency}
+                      <span className="ms-2 text-muted-foreground line-through">{Number(p.price).toLocaleString()}</span>
+                    </>
+                  ) : (
+                    <>{Number(p.price).toLocaleString()} {p.currency}</>
+                  )}
+                </p>
+
               </div>
               <div className="flex gap-1">
                 <Button size="sm" variant="outline" onClick={() => setEditing(p)}>{t(lang, "edit")}</Button>
@@ -88,8 +100,24 @@ export function PackagesTab() {
             <F label="Description (EN)"><Textarea value={editing.description_en} onChange={(e) => setEditing({ ...editing, description_en: e.target.value })} /></F>
             <F label={t(lang, "price")}><Input type="number" value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} /></F>
             <F label="Currency"><Input value={editing.currency} onChange={(e) => setEditing({ ...editing, currency: e.target.value })} /></F>
+            <F label={t(lang, "discounted_price")}>
+              <Input
+                type="number"
+                value={editing.discounted_price ?? ""}
+                placeholder={lang === "ar" ? "اتركه فارغاً إن لم يوجد عرض" : "Leave blank if no offer"}
+                onChange={(e) => setEditing({ ...editing, discounted_price: e.target.value === "" ? null : Number(e.target.value) })}
+              />
+            </F>
+            <F label={t(lang, "offer_expiry_date")}>
+              <Input
+                type="date"
+                value={editing.offer_expiry_date ? editing.offer_expiry_date.slice(0, 10) : ""}
+                onChange={(e) => setEditing({ ...editing, offer_expiry_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
+              />
+            </F>
             <F label="Sort order"><Input type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} /></F>
             <F label="Active"><Switch checked={editing.active} onCheckedChange={(v) => setEditing({ ...editing, active: v })} /></F>
+
           </div>
           <div className="flex gap-2">
             <Button onClick={save} className="gap-1 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground"><Save className="h-4 w-4" /> {t(lang, "save")}</Button>

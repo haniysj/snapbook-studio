@@ -193,3 +193,10 @@
   font-weight: 700;
   border-radius: 0.5rem;
 }
+/* Weekend (Fri/Sat) — subtle gold-tinted background */
+@utility rdp-day-weekend {
+  background-color: color-mix(in oklab, var(--gold) 12%, transparent);
+  color: var(--gold);
+  border-radius: 0.5rem;
+}
+

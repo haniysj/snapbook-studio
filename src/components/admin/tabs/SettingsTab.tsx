@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { publicMediaUrl } from "@/lib/helpers";
+import { MediaImage } from "@/components/site/MediaImage";
 
 export function SettingsTab() {
   const { lang } = useLang();
@@ -52,7 +52,7 @@ export function SettingsTab() {
       <div>
         <Label>{t(lang, "logo")}</Label>
         <div className="flex items-center gap-3">
-          {logoUrl && <img src={publicMediaUrl(logoUrl)} alt="logo" className="h-14 w-14 rounded-full object-cover ring-1 ring-gold/40" />}
+          {logoUrl && <MediaImage path={logoUrl} alt="logo" className="h-14 w-14 rounded-full object-cover ring-1 ring-gold/40" />}
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
           <Button variant="outline" onClick={() => fileRef.current?.click()} className="gap-2"><Upload className="h-4 w-4" /> {t(lang, "upload_image")}</Button>
           {logoUrl && <Button variant="ghost" onClick={() => setLogoUrl("")}>{t(lang, "cancel")}</Button>}

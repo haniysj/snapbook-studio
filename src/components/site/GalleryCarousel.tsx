@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { publicMediaUrl } from "@/lib/helpers";
+import { MediaImage } from "@/components/site/MediaImage";
 import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
 
@@ -68,11 +68,12 @@ export function GalleryCarousel() {
             >
               {images.map((img) => (
                 <div key={img.id} className="relative min-w-full">
-                  <img
-                    src={publicMediaUrl(img.url)}
+                  <MediaImage
+                    path={img.url}
                     alt={img.title_ar ?? ""}
                     className="h-[380px] w-full object-cover md:h-[520px]"
                   />
+
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   {img.title_ar && (
                     <div className="absolute bottom-4 start-4 rounded-md bg-black/50 px-3 py-1 text-sm text-white backdrop-blur-md">
@@ -102,7 +103,7 @@ export function GalleryCarousel() {
                 onClick={() => setIndex(i)}
                 className={`relative aspect-square overflow-hidden rounded-xl ring-1 transition ${i === index ? "ring-gold" : "ring-border hover:ring-gold/50"}`}
               >
-                <img src={publicMediaUrl(img.url)} alt="" className="h-full w-full object-cover" />
+                <MediaImage path={img.url} alt="" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>

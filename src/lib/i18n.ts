@@ -72,7 +72,13 @@ export const dict: Dict = {
   change_password: { ar: "تغيير كلمة المرور", en: "Change password" },
   no_bookings: { ar: "لا توجد حجوزات", en: "No bookings yet" },
   loading: { ar: "جارٍ التحميل...", en: "Loading..." },
+  welcome_back: { ar: "مرحباً", en: "Welcome" },
+  discounted_price: { ar: "السعر بعد التخفيض", en: "Discounted price" },
+  offer_expires: { ar: "ينتهي العرض", en: "Offer ends" },
+  offer_expiry_date: { ar: "تاريخ انتهاء العرض", en: "Offer expiry date" },
+  legend_weekend: { ar: "نهاية الأسبوع", en: "Weekend" },
 };
+
 
 export function t(lang: Lang, key: keyof typeof dict): string {
   return dict[key]?.[lang] ?? key;

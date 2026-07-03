@@ -56,16 +56,20 @@ function BookPage() {
   });
 
   const { data: bookedRows = [] } = useQuery({
-    queryKey: ["booked_dates"],
-    queryFn: async () => (await supabase.from("booked_dates").select("event_date")).data ?? [],
+    queryKey: ["booked_dates_rpc"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_booked_dates");
+      return (data ?? []) as Array<{ event_date: string | null }>;
+    },
   });
   const bookedDates = useMemo(
     () =>
-      (bookedRows as Array<{ event_date: string | null }>)
+      bookedRows
         .filter((b): b is { event_date: string } => !!b.event_date)
         .map((b) => toDate(b.event_date)),
     [bookedRows],
   );
+
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,15 +126,17 @@ function BookPage() {
               <div className="rounded-lg border border-border p-3">
                 <DayPicker
                   mode="single"
+                  weekStartsOn={0}
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   disabled={[{ before: new Date() }, ...bookedDates]}
-                  modifiers={{ booked: bookedDates }}
-                  modifiersClassNames={{ booked: "rdp-day-booked", selected: "rdp-day-selected-gold" }}
+                  modifiers={{ booked: bookedDates, weekend: { dayOfWeek: [5, 6] } }}
+                  modifiersClassNames={{ booked: "rdp-day-booked", selected: "rdp-day-selected-gold", weekend: "rdp-day-weekend" }}
                   locale={lang === "ar" ? arLocale : enUS}
                   dir={lang === "ar" ? "rtl" : "ltr"}
                 />
               </div>
+
             )}
           </div>
 

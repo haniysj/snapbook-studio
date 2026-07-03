@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { publicMediaUrl } from "@/lib/helpers";
+import { MediaImage } from "@/components/site/MediaImage";
 
 export function GalleryTab() {
   const { lang } = useLang();
@@ -109,7 +109,7 @@ export function GalleryTab() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {images.map((img: any) => (
           <div key={img.id} className="group relative overflow-hidden rounded-xl">
-            <img src={publicMediaUrl(img.url)} alt={img.title_ar ?? ""} className="aspect-square w-full object-cover" />
+            <MediaImage path={img.url} alt={img.title_ar ?? ""} className="aspect-square w-full object-cover" />
             <button onClick={() => removeImage(img.id, img.url)} className="absolute top-2 end-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition group-hover:opacity-100">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
