@@ -259,6 +259,12 @@ export type Database = {
       }
     }
     Functions: {
+      get_booked_dates: {
+        Args: never
+        Returns: {
+          event_date: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
