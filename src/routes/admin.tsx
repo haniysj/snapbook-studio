@@ -1,16 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { usernameToEmail } from "@/lib/helpers";
+import { emailToUsername, usernameToEmail } from "@/lib/helpers";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
-import { useLang } from "@/lib/app-context";
+import { useLang, useSettings } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { MediaImage } from "@/components/site/MediaImage";
 import { Loader2, LogIn } from "lucide-react";
+
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
