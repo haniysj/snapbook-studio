@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { publicMediaUrl } from "@/lib/helpers";
+import { MediaImage } from "@/components/site/MediaImage";
 
 export function SettingsTab() {
   const { lang } = useLang();
