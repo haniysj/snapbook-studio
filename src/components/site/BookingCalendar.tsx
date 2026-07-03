@@ -25,13 +25,16 @@ export function BookingCalendar() {
   const [selected, setSelected] = useState<Date | undefined>();
 
   const { data: bookedRows = [] } = useQuery({
-    queryKey: ["booked_dates"],
-    queryFn: async () => (await supabase.from("booked_dates").select("event_date")).data ?? [],
+    queryKey: ["booked_dates_rpc"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_booked_dates");
+      return (data ?? []) as Array<{ event_date: string | null }>;
+    },
   });
 
   const bookedDates = useMemo(
     () =>
-      (bookedRows as Array<{ event_date: string | null }>)
+      bookedRows
         .filter((b): b is { event_date: string } => !!b.event_date)
         .map((b) => toDate(b.event_date)),
     [bookedRows],
@@ -44,6 +47,8 @@ export function BookingCalendar() {
     navigate({ to: "/book", search: { date: toKey(selected) } });
   };
 
+  const localeObj = lang === "ar" ? { ...arLocale, options: { ...arLocale.options, weekStartsOn: 0 as const } } : enUS;
+
   return (
     <section id="calendar" className="mx-auto max-w-6xl px-4 py-12">
       <div className="mb-6 text-center">
@@ -54,15 +59,20 @@ export function BookingCalendar() {
       <div className="mx-auto flex max-w-lg flex-col items-center card-elegant p-4 md:p-6">
         <DayPicker
           mode="single"
+          weekStartsOn={0}
           selected={selected}
           onSelect={setSelected}
           disabled={[{ before: new Date() }, ...bookedDates]}
-          modifiers={{ booked: bookedDates }}
+          modifiers={{
+            booked: bookedDates,
+            weekend: { dayOfWeek: [5, 6] },
+          }}
           modifiersClassNames={{
             booked: "rdp-day-booked",
             selected: "rdp-day-selected-gold",
+            weekend: "rdp-day-weekend",
           }}
-          locale={lang === "ar" ? arLocale : enUS}
+          locale={localeObj}
           dir={lang === "ar" ? "rtl" : "ltr"}
           className="mx-auto"
         />
@@ -70,6 +80,7 @@ export function BookingCalendar() {
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs">
           <Legend color="bg-booked" label={t(lang, "legend_booked")} />
           <Legend color="bg-gradient-to-r from-gold to-gold-soft" label={t(lang, "legend_selected")} />
+          <Legend color="bg-gold/20 border border-gold/40" label={t(lang, "legend_weekend")} />
           <Legend color="bg-muted border border-border" label={t(lang, "legend_available")} />
         </div>
 
