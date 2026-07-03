@@ -14,8 +14,10 @@ import { toast } from "sonner";
 type Pkg = {
   id?: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
   price: number; currency: string; sort_order: number; active: boolean;
+  discounted_price: number | null; offer_expiry_date: string | null;
 };
-const empty: Pkg = { name_ar: "", name_en: "", description_ar: "", description_en: "", price: 0, currency: "OMR", sort_order: 0, active: true };
+const empty: Pkg = { name_ar: "", name_en: "", description_ar: "", description_en: "", price: 0, currency: "OMR", sort_order: 0, active: true, discounted_price: null, offer_expiry_date: null };
+
 
 export function PackagesTab() {
   const { lang } = useLang();
