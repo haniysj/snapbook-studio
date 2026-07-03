@@ -154,9 +154,11 @@ export type Database = {
           currency: string
           description_ar: string | null
           description_en: string | null
+          discounted_price: number | null
           id: string
           name_ar: string
           name_en: string
+          offer_expiry_date: string | null
           price: number
           sort_order: number
         }
@@ -166,9 +168,11 @@ export type Database = {
           currency?: string
           description_ar?: string | null
           description_en?: string | null
+          discounted_price?: number | null
           id?: string
           name_ar: string
           name_en?: string
+          offer_expiry_date?: string | null
           price?: number
           sort_order?: number
         }
@@ -178,9 +182,11 @@ export type Database = {
           currency?: string
           description_ar?: string | null
           description_en?: string | null
+          discounted_price?: number | null
           id?: string
           name_ar?: string
           name_en?: string
+          offer_expiry_date?: string | null
           price?: number
           sort_order?: number
         }
