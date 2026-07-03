@@ -69,7 +69,17 @@ export function PackagesTab() {
               <div>
                 <h4 className="font-semibold">{p.name_ar}</h4>
                 <p className="text-xs text-muted-foreground">{p.description_ar}</p>
-                <p className="mt-1 text-sm gold-text font-bold">{Number(p.price).toLocaleString()} {p.currency}</p>
+                <p className="mt-1 text-sm gold-text font-bold">
+                  {p.discounted_price != null ? (
+                    <>
+                      {Number(p.discounted_price).toLocaleString()} {p.currency}
+                      <span className="ms-2 text-muted-foreground line-through">{Number(p.price).toLocaleString()}</span>
+                    </>
+                  ) : (
+                    <>{Number(p.price).toLocaleString()} {p.currency}</>
+                  )}
+                </p>
+
               </div>
               <div className="flex gap-1">
                 <Button size="sm" variant="outline" onClick={() => setEditing(p)}>{t(lang, "edit")}</Button>
