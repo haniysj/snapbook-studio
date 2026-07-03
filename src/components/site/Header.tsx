@@ -16,7 +16,7 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
           {settings.logo_url ? (
-            <img src={publicMediaUrl(settings.logo_url)} alt={settings.site_name} className="h-9 w-9 rounded-full object-cover ring-1 ring-gold/40" />
+            <MediaImage path={settings.logo_url} alt={settings.site_name} className="h-9 w-9 rounded-full object-cover ring-1 ring-gold/40" />
           ) : (
             <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-gold to-gold-soft text-primary-foreground">
               <Camera className="h-4 w-4" />
