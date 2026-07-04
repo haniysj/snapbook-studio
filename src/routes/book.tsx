@@ -8,7 +8,8 @@ import { format } from "date-fns";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/site/Header";
-import { useLang } from "@/lib/app-context";
+import { useLang, useSettings } from "@/lib/app-context";
+import { whatsappUrl } from "@/lib/helpers";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
