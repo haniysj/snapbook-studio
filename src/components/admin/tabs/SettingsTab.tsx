@@ -15,6 +15,7 @@ export function SettingsTab() {
   const { settings, refresh } = useSettings();
   const [siteName, setSiteName] = useState(settings.site_name);
   const [whatsapp, setWhatsapp] = useState(settings.whatsapp_number);
+  const [instagram, setInstagram] = useState(settings.instagram_url ?? "");
   const [bank, setBank] = useState(settings.bank_details);
   const [logoUrl, setLogoUrl] = useState(settings.logo_url ?? "");
   const [saving, setSaving] = useState(false);
@@ -23,9 +24,11 @@ export function SettingsTab() {
   useEffect(() => {
     setSiteName(settings.site_name);
     setWhatsapp(settings.whatsapp_number);
+    setInstagram(settings.instagram_url ?? "");
     setBank(settings.bank_details);
     setLogoUrl(settings.logo_url ?? "");
   }, [settings]);
+
 
   const uploadLogo = async (f: File) => {
     const path = `logo/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
