@@ -101,6 +101,18 @@ function BookPage() {
       toast.error(error?.message ?? "Error");
       return;
     }
+
+    // Auto-open WhatsApp: notify platform with booking details from customer
+    const selectedPkg = packages.find((p: any) => p.id === pkg);
+    const pkgLabel = selectedPkg ? (lang === "ar" ? selectedPkg.name_ar : (selectedPkg.name_en || selectedPkg.name_ar)) : "";
+    const bookingRef = `#${data.id.slice(0, 8).toUpperCase()}`;
+    const notifyMsg = lang === "ar"
+      ? `طلب حجز جديد ${bookingRef}\n\nالاسم: ${name.trim()}\nالهاتف: ${phone.trim()}\nالتاريخ: ${toKey(selectedDate)}\nالوقت: ${time}\nالباقة: ${pkgLabel}${location ? `\nالموقع: ${location.trim()}` : ""}${notes ? `\nملاحظات: ${notes.trim()}` : ""}`
+      : `New booking request ${bookingRef}\n\nName: ${name.trim()}\nPhone: ${phone.trim()}\nDate: ${toKey(selectedDate)}\nTime: ${time}\nPackage: ${pkgLabel}${location ? `\nLocation: ${location.trim()}` : ""}${notes ? `\nNotes: ${notes.trim()}` : ""}`;
+    try {
+      window.open(whatsappUrl(settings.whatsapp_number, notifyMsg), "_blank", "noopener,noreferrer");
+    } catch { /* ignore */ }
+
     navigate({ to: "/booking-confirmed/$id", params: { id: data.id } });
   };
 
