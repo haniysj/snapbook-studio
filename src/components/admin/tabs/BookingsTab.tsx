@@ -82,7 +82,7 @@ export function BookingsTab() {
             </div>
             <div className="flex flex-wrap gap-2">
               {b.status !== "confirmed" && (
-                <Button size="sm" onClick={() => setStatus(b.id, "confirmed")} className="gap-1 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
+                <Button size="sm" onClick={() => setStatus(b.id, "confirmed", b)} className="gap-1 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
                   <Check className="h-3.5 w-3.5" /> {t(lang, "confirm")}
                 </Button>
               )}
@@ -90,7 +90,7 @@ export function BookingsTab() {
                 <Button size="sm" variant="outline" className="gap-1"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</Button>
               </a>
               {b.status !== "cancelled" && (
-                <Button size="sm" variant="outline" onClick={() => setStatus(b.id, "cancelled")} className="gap-1">
+                <Button size="sm" variant="outline" onClick={() => setStatus(b.id, "cancelled", b)} className="gap-1">
                   <X className="h-3.5 w-3.5" />
                 </Button>
               )}
