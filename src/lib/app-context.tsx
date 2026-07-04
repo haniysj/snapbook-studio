@@ -17,6 +17,7 @@ export type SiteSettings = {
   logo_url: string | null;
   whatsapp_number: string;
   bank_details: string;
+  instagram_url: string | null;
 };
 type SettingsCtx = { settings: SiteSettings; refresh: () => Promise<void> };
 const SettingsContext = createContext<SettingsCtx | null>(null);
@@ -26,7 +27,9 @@ const DEFAULT_SETTINGS: SiteSettings = {
   logo_url: null,
   whatsapp_number: "+96896763697",
   bank_details: "",
+  instagram_url: null,
 };
+
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
