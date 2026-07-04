@@ -64,6 +64,7 @@ export function SettingsTab() {
         </div>
       </div>
       <div><Label>{t(lang, "whatsapp_number")}</Label><Input dir="ltr" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+968..." /></div>
+      <div><Label>{lang === "ar" ? "رابط الانستقرام" : "Instagram URL"}</Label><Input dir="ltr" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="https://instagram.com/..." /></div>
       <div><Label>{t(lang, "bank_details_label")}</Label><Textarea rows={6} value={bank} onChange={(e) => setBank(e.target.value)} /></div>
       <Button onClick={save} disabled={saving} className="gap-2 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
         <Save className="h-4 w-4" /> {saving ? "..." : t(lang, "save")}
