@@ -63,8 +63,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
         logo_url: data.logo_url,
         whatsapp_number: data.whatsapp_number,
         bank_details: data.bank_details ?? "",
+        instagram_url: (data as any).instagram_url ?? null,
       });
     }
+
   }, []);
 
   useEffect(() => {
