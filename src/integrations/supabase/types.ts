@@ -196,6 +196,7 @@ export type Database = {
         Row: {
           bank_details: string | null
           id: number
+          instagram_url: string | null
           logo_url: string | null
           site_name: string
           updated_at: string
@@ -204,6 +205,7 @@ export type Database = {
         Insert: {
           bank_details?: string | null
           id?: number
+          instagram_url?: string | null
           logo_url?: string | null
           site_name?: string
           updated_at?: string
@@ -212,6 +214,7 @@ export type Database = {
         Update: {
           bank_details?: string | null
           id?: number
+          instagram_url?: string | null
           logo_url?: string | null
           site_name?: string
           updated_at?: string

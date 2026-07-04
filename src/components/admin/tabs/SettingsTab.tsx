@@ -15,6 +15,7 @@ export function SettingsTab() {
   const { settings, refresh } = useSettings();
   const [siteName, setSiteName] = useState(settings.site_name);
   const [whatsapp, setWhatsapp] = useState(settings.whatsapp_number);
+  const [instagram, setInstagram] = useState(settings.instagram_url ?? "");
   const [bank, setBank] = useState(settings.bank_details);
   const [logoUrl, setLogoUrl] = useState(settings.logo_url ?? "");
   const [saving, setSaving] = useState(false);
@@ -23,9 +24,11 @@ export function SettingsTab() {
   useEffect(() => {
     setSiteName(settings.site_name);
     setWhatsapp(settings.whatsapp_number);
+    setInstagram(settings.instagram_url ?? "");
     setBank(settings.bank_details);
     setLogoUrl(settings.logo_url ?? "");
   }, [settings]);
+
 
   const uploadLogo = async (f: File) => {
     const path = `logo/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
@@ -39,7 +42,9 @@ export function SettingsTab() {
     setSaving(true);
     const { error } = await supabase.from("settings").update({
       site_name: siteName, whatsapp_number: whatsapp, bank_details: bank, logo_url: logoUrl || null,
-    }).eq("id", 1);
+      instagram_url: instagram.trim() || null,
+    } as any).eq("id", 1);
+
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(lang === "ar" ? "تم الحفظ" : "Saved");
@@ -59,6 +64,7 @@ export function SettingsTab() {
         </div>
       </div>
       <div><Label>{t(lang, "whatsapp_number")}</Label><Input dir="ltr" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+968..." /></div>
+      <div><Label>{lang === "ar" ? "رابط الانستقرام" : "Instagram URL"}</Label><Input dir="ltr" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="https://instagram.com/..." /></div>
       <div><Label>{t(lang, "bank_details_label")}</Label><Textarea rows={6} value={bank} onChange={(e) => setBank(e.target.value)} /></div>
       <Button onClick={save} disabled={saving} className="gap-2 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
         <Save className="h-4 w-4" /> {saving ? "..." : t(lang, "save")}
