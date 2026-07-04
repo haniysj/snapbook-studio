@@ -26,12 +26,24 @@ export function BookingsTab() {
     },
   });
 
-  const setStatus = async (id: string, status: "pending" | "confirmed" | "cancelled") => {
+  const setStatus = async (id: string, status: "pending" | "confirmed" | "cancelled", booking?: any) => {
     const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(lang === "ar" ? "تم التحديث" : "Updated");
     qc.invalidateQueries({ queryKey: ["admin_bookings"] });
     qc.invalidateQueries({ queryKey: ["booked_dates"] });
+
+    if (status === "confirmed" && booking?.phone) {
+      const pkg = booking.packages;
+      const pkgName = pkg ? (lang === "ar" ? pkg.name_ar : (pkg.name_en || pkg.name_ar)) : "";
+      const ref = `#${id.slice(0, 8).toUpperCase()}`;
+      const msg = lang === "ar"
+        ? `مرحباً ${booking.customer_name}،\nتم تأكيد حجزك ${ref} لدى ${settings.site_name}. 🎉\n\nالتاريخ: ${booking.event_date}\nالوقت: ${booking.event_time?.slice(0,5) ?? ""}\nالباقة: ${pkgName}${pkg ? ` (${pkg.price} ${pkg.currency})` : ""}${booking.event_location_url ? `\nالموقع: ${booking.event_location_url}` : ""}${booking.notes ? `\nملاحظات: ${booking.notes}` : ""}\n\nنشكرك على ثقتك بنا.`
+        : `Hello ${booking.customer_name},\nYour booking ${ref} with ${settings.site_name} is confirmed. 🎉\n\nDate: ${booking.event_date}\nTime: ${booking.event_time?.slice(0,5) ?? ""}\nPackage: ${pkgName}${pkg ? ` (${pkg.price} ${pkg.currency})` : ""}${booking.event_location_url ? `\nLocation: ${booking.event_location_url}` : ""}${booking.notes ? `\nNotes: ${booking.notes}` : ""}\n\nThank you for choosing us.`;
+      try {
+        window.open(whatsappUrl(booking.phone, msg), "_blank", "noopener,noreferrer");
+      } catch { /* ignore */ }
+    }
   };
 
   const remove = async (id: string) => {
