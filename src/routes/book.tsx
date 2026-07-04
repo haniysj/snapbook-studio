@@ -39,6 +39,7 @@ function toKey(d: Date): string {
 
 function BookPage() {
   const { lang } = useLang();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const { date: initialDate, package_id: initialPkg } = Route.useSearch();
 
