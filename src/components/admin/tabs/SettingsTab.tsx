@@ -42,7 +42,9 @@ export function SettingsTab() {
     setSaving(true);
     const { error } = await supabase.from("settings").update({
       site_name: siteName, whatsapp_number: whatsapp, bank_details: bank, logo_url: logoUrl || null,
-    }).eq("id", 1);
+      instagram_url: instagram.trim() || null,
+    } as any).eq("id", 1);
+
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(lang === "ar" ? "تم الحفظ" : "Saved");
