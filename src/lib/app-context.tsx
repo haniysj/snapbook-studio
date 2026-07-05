@@ -74,6 +74,28 @@ export function AppProviders({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
+  // Sync favicon + document title with site settings (logo + name)
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (settings.site_name) document.title = settings.site_name;
+    let cancelled = false;
+    (async () => {
+      const href = settings.logo_url ? await signedMediaUrl(settings.logo_url) : "";
+      if (cancelled || !href) return;
+      const head = document.head;
+      head.querySelectorAll("link[rel~='icon']").forEach((el) => el.parentElement?.removeChild(el));
+      const link = document.createElement("link");
+      link.rel = "icon";
+      link.href = href;
+      head.appendChild(link);
+      const apple = document.createElement("link");
+      apple.rel = "apple-touch-icon";
+      apple.href = href;
+      head.appendChild(apple);
+    })();
+    return () => { cancelled = true; };
+  }, [settings.logo_url, settings.site_name]);
+
   const themeCtx = useMemo<ThemeCtx>(
     () => ({ theme, toggle: () => setTheme((p) => (p === "light" ? "dark" : "light")), set: setTheme }),
     [theme],
