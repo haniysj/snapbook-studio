@@ -81,9 +81,11 @@ function BookPage() {
     if (!pkg) return toast.error(t(lang, "select_package"));
 
     setSubmitting(true);
-    const { data, error } = await supabase
+    const bookingId = crypto.randomUUID();
+    const { error } = await supabase
       .from("bookings")
       .insert({
+        id: bookingId,
         customer_name: name.trim(),
         phone: phone.trim(),
         event_location_url: location.trim(),
@@ -92,12 +94,10 @@ function BookPage() {
         package_id: pkg,
         notes: notes.trim(),
         status: "pending",
-      })
-      .select("id")
-      .single();
+      });
     setSubmitting(false);
 
-    if (error || !data) {
+    if (error) {
       toast.error(error?.message ?? "Error");
       return;
     }
@@ -105,7 +105,7 @@ function BookPage() {
     // Auto-open WhatsApp: notify platform with booking details from customer
     const selectedPkg = packages.find((p: any) => p.id === pkg);
     const pkgLabel = selectedPkg ? (lang === "ar" ? selectedPkg.name_ar : (selectedPkg.name_en || selectedPkg.name_ar)) : "";
-    const bookingRef = `#${data.id.slice(0, 8).toUpperCase()}`;
+    const bookingRef = `#${bookingId.slice(0, 8).toUpperCase()}`;
     const notifyMsg = lang === "ar"
       ? `طلب حجز جديد ${bookingRef}\n\nالاسم: ${name.trim()}\nالهاتف: ${phone.trim()}\nالتاريخ: ${toKey(selectedDate)}\nالوقت: ${time}\nالباقة: ${pkgLabel}${location ? `\nالموقع: ${location.trim()}` : ""}${notes ? `\nملاحظات: ${notes.trim()}` : ""}`
       : `New booking request ${bookingRef}\n\nName: ${name.trim()}\nPhone: ${phone.trim()}\nDate: ${toKey(selectedDate)}\nTime: ${time}\nPackage: ${pkgLabel}${location ? `\nLocation: ${location.trim()}` : ""}${notes ? `\nNotes: ${notes.trim()}` : ""}`;
@@ -113,7 +113,7 @@ function BookPage() {
       window.open(whatsappUrl(settings.whatsapp_number, notifyMsg), "_blank", "noopener,noreferrer");
     } catch { /* ignore */ }
 
-    navigate({ to: "/booking-confirmed/$id", params: { id: data.id } });
+    navigate({ to: "/booking-confirmed/$id", params: { id: bookingId } });
   };
 
   return (
