@@ -109,10 +109,17 @@ export function GalleryCarousel() {
           >
             {images.map((img) => (
               <div key={img.id} className="relative h-full min-w-full">
-                <MediaImage path={img.url} alt={img.title_ar ?? ""} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setLightbox(true)}
+                  aria-label={lang === "ar" ? "تكبير الصورة" : "Zoom image"}
+                  className="block h-full w-full cursor-zoom-in"
+                >
+                  <MediaImage path={img.url} alt={img.title_ar ?? ""} className="h-full w-full object-cover" />
+                </button>
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 {img.title_ar && (
-                  <div className="absolute bottom-4 start-4 rounded-md bg-black/50 px-3 py-1 text-sm text-white backdrop-blur-md">
+                  <div className="pointer-events-none absolute bottom-4 start-4 rounded-md bg-black/50 px-3 py-1 text-sm text-white backdrop-blur-md">
                     {img.title_ar}
                   </div>
                 )}
