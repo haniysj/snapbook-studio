@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MediaImage } from "@/components/site/MediaImage";
 import { useLang } from "@/lib/app-context";
