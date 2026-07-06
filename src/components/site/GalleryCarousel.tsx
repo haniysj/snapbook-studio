@@ -24,7 +24,23 @@ export function GalleryCarousel() {
   });
 
   const [index, setIndex] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
   useEffect(() => { setIndex(0); }, [selectedCat, images.length]);
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(false);
+      if (e.key === "ArrowRight") go(lang === "ar" ? -1 : 1);
+      if (e.key === "ArrowLeft") go(lang === "ar" ? 1 : -1);
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightbox, lang]);
   useEffect(() => {
     if (images.length <= 1) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % images.length), 4500);
