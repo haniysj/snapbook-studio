@@ -157,6 +157,58 @@ export function GalleryCarousel() {
           )}
         </div>
       )}
+
+      {lightbox && images.length > 0 && images[index] && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+          onClick={() => setLightbox(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightbox(false); }}
+            aria-label={lang === "ar" ? "إغلاق" : "Close"}
+            className="absolute top-4 end-4 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="prev"
+                onClick={(e) => { e.stopPropagation(); go(prevDir as 1 | -1); }}
+                className="absolute start-4 top-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                type="button"
+                aria-label="next"
+                onClick={(e) => { e.stopPropagation(); go(nextDir as 1 | -1); }}
+                className="absolute end-4 top-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
+          )}
+
+          <div className="relative max-h-[90vh] max-w-[95vw]" onClick={(e) => e.stopPropagation()}>
+            <MediaImage
+              path={images[index].url}
+              alt={images[index].title_ar ?? ""}
+              className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
+            />
+            {images[index].title_ar && (
+              <div className="absolute bottom-3 start-3 rounded-md bg-black/60 px-3 py-1 text-sm text-white backdrop-blur-md">
+                {images[index].title_ar}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
