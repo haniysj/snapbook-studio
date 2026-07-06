@@ -42,10 +42,10 @@ export function GalleryCarousel() {
     };
   }, [lightbox, lang]);
   useEffect(() => {
-    if (images.length <= 1) return;
+    if (images.length <= 1 || lightbox) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % images.length), 4500);
     return () => clearInterval(id);
-  }, [images.length]);
+  }, [images.length, lightbox]);
 
   const go = (dir: 1 | -1) => {
     if (images.length === 0) return;
