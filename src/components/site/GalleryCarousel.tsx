@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MediaImage } from "@/components/site/MediaImage";
+import { MediaVideo } from "@/components/site/MediaVideo";
 import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
 
