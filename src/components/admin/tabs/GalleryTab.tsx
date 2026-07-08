@@ -44,12 +44,14 @@ export function GalleryTab() {
   };
 
   const uploadImage = async (file: File) => {
+    const isVideo = file.type.startsWith("video/");
     const path = `gallery/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
-    const { error: upErr } = await supabase.storage.from("media").upload(path, file);
+    const { error: upErr } = await supabase.storage.from("media").upload(path, file, { contentType: file.type });
     if (upErr) return toast.error(upErr.message);
     const { error } = await supabase.from("gallery_images").insert({
       url: path, title_ar: title, category_id: selCat || null, sort_order: images.length, active: true,
-    });
+      media_type: isVideo ? "video" : "image",
+    } as any);
     if (error) return toast.error(error.message);
     toast.success(lang === "ar" ? "تم الرفع" : "Uploaded");
     setTitle("");
