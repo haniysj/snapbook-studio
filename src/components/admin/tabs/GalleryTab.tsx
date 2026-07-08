@@ -99,7 +99,7 @@ export function GalleryTab() {
             </Select>
           </div>
           <div className="flex items-end">
-            <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
+            <input ref={fileRef} type="file" accept="image/*,video/*" hidden onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
             <Button onClick={() => fileRef.current?.click()} className="w-full gap-2 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
               <Upload className="h-4 w-4" /> {t(lang, "upload_image")}
             </Button>
