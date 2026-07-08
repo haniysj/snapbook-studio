@@ -60,7 +60,7 @@ export const dict: Dict = {
   category: { ar: "التصنيف", en: "Category" },
   title: { ar: "العنوان", en: "Title" },
   image_url: { ar: "رابط الصورة", en: "Image URL" },
-  upload_image: { ar: "رفع صورة", en: "Upload image" },
+  upload_image: { ar: "رفع صورة أو فيديو", en: "Upload image or video" },
   site_name: { ar: "اسم المنصة", en: "Site name" },
   logo: { ar: "الشعار", en: "Logo" },
   whatsapp_number: { ar: "رقم الواتساب", en: "WhatsApp number" },
