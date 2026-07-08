@@ -201,11 +201,21 @@ export function GalleryCarousel() {
           )}
 
           <div className="relative max-h-[90vh] max-w-[95vw]" onClick={(e) => e.stopPropagation()}>
-            <MediaImage
-              path={images[index].url}
-              alt={images[index].title_ar ?? ""}
-              className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
-            />
+            {(images[index] as any).media_type === "video" ? (
+              <MediaVideo
+                path={images[index].url}
+                className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <MediaImage
+                path={images[index].url}
+                alt={images[index].title_ar ?? ""}
+                className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
+              />
+            )}
             {images[index].title_ar && (
               <div className="absolute bottom-3 start-3 rounded-md bg-black/60 px-3 py-1 text-sm text-white backdrop-blur-md">
                 {images[index].title_ar}
