@@ -116,7 +116,11 @@ export function GalleryCarousel() {
                   aria-label={lang === "ar" ? "تكبير الصورة" : "Zoom image"}
                   className="block h-full w-full cursor-zoom-in"
                 >
-                  <MediaImage path={img.url} alt={img.title_ar ?? ""} className="h-full w-full object-cover" />
+                  {img.media_type === "video" ? (
+                    <MediaVideo path={img.url} className="h-full w-full object-cover" muted playsInline loop autoPlay />
+                  ) : (
+                    <MediaImage path={img.url} alt={img.title_ar ?? ""} className="h-full w-full object-cover" />
+                  )}
                 </button>
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 {img.title_ar && (
