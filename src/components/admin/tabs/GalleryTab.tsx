@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { MediaImage } from "@/components/site/MediaImage";
+import { MediaVideo } from "@/components/site/MediaVideo";
 
 export function GalleryTab() {
   const { lang } = useLang();
