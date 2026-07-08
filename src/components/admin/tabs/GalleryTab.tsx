@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { MediaImage } from "@/components/site/MediaImage";
+import { MediaVideo } from "@/components/site/MediaVideo";
 
 export function GalleryTab() {
   const { lang } = useLang();
@@ -44,12 +45,14 @@ export function GalleryTab() {
   };
 
   const uploadImage = async (file: File) => {
+    const isVideo = file.type.startsWith("video/");
     const path = `gallery/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
-    const { error: upErr } = await supabase.storage.from("media").upload(path, file);
+    const { error: upErr } = await supabase.storage.from("media").upload(path, file, { contentType: file.type });
     if (upErr) return toast.error(upErr.message);
     const { error } = await supabase.from("gallery_images").insert({
       url: path, title_ar: title, category_id: selCat || null, sort_order: images.length, active: true,
-    });
+      media_type: isVideo ? "video" : "image",
+    } as any);
     if (error) return toast.error(error.message);
     toast.success(lang === "ar" ? "تم الرفع" : "Uploaded");
     setTitle("");
@@ -97,7 +100,7 @@ export function GalleryTab() {
             </Select>
           </div>
           <div className="flex items-end">
-            <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
+            <input ref={fileRef} type="file" accept="image/*,video/*" hidden onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
             <Button onClick={() => fileRef.current?.click()} className="w-full gap-2 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
               <Upload className="h-4 w-4" /> {t(lang, "upload_image")}
             </Button>
@@ -109,7 +112,11 @@ export function GalleryTab() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {images.map((img: any) => (
           <div key={img.id} className="group relative overflow-hidden rounded-xl">
-            <MediaImage path={img.url} alt={img.title_ar ?? ""} className="aspect-square w-full object-cover" />
+            {img.media_type === "video" ? (
+              <MediaVideo path={img.url} className="aspect-square w-full object-cover" />
+            ) : (
+              <MediaImage path={img.url} alt={img.title_ar ?? ""} className="aspect-square w-full object-cover" />
+            )}
             <button onClick={() => removeImage(img.id, img.url)} className="absolute top-2 end-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition group-hover:opacity-100">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
