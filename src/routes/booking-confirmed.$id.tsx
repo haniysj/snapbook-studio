@@ -30,7 +30,10 @@ function BookingConfirmed() {
         </div>
         <h1 className="font-display text-3xl font-bold gold-text">{t(lang, "booking_success")}</h1>
         <p className="mt-3 text-muted-foreground">{t(lang, "booking_success_desc")}</p>
-        <p className="mt-1 font-mono text-xs text-muted-foreground">#{id.slice(0, 8).toUpperCase()}</p>
+        <p className="mt-3 text-sm">
+          <span className="text-muted-foreground">{lang === "ar" ? "رمز تأكيد الحجز:" : "Booking confirmation code:"}</span>{" "}
+          <span className="font-mono font-semibold">#{id.slice(0, 8).toUpperCase()}</span>
+        </p>
 
         <div className="card-elegant mt-8 p-6 text-start">
           <div className="mb-3 flex items-center justify-between">
