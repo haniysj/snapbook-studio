@@ -56,12 +56,39 @@ export function BookingsTab() {
     qc.invalidateQueries({ queryKey: ["booked_dates"] });
   };
 
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((b: any) => {
+      const ref = `#${b.id.slice(0, 8).toUpperCase()}`.toLowerCase();
+      return (
+        b.customer_name?.toLowerCase().includes(q) ||
+        b.phone?.toLowerCase().includes(q) ||
+        ref.includes(q) ||
+        b.id?.toLowerCase().includes(q)
+      );
+    });
+  }, [rows, search]);
+
   if (isLoading) return <div className="text-sm text-muted-foreground">{t(lang, "loading")}</div>;
-  if (rows.length === 0) return <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">{t(lang, "no_bookings")}</div>;
 
   return (
     <div className="space-y-3">
-      {rows.map((b: any) => {
+      <div className="relative">
+        <Search className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground start-3" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={lang === "ar" ? "ابحث بالاسم أو الرمز أو رقم الهاتف" : "Search by name, code, or phone"}
+          className="ps-9"
+        />
+      </div>
+      {filtered.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          {rows.length === 0 ? t(lang, "no_bookings") : (lang === "ar" ? "لا توجد نتائج" : "No results")}
+        </div>
+      ) : filtered.map((b: any) => {
         const pkg = b.packages;
         const waMsg = `${t(lang, "wa_confirm_msg")}\n\n${t(lang, "form_name")}: ${b.customer_name}\n${t(lang, "form_date")}: ${b.event_date} ${b.event_time}\n${t(lang, "form_package")}: ${pkg?.name_ar ?? ""}\n${b.event_location_url ? `📍 ${b.event_location_url}` : ""}`;
         return (
