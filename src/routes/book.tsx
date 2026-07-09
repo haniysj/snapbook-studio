@@ -170,11 +170,17 @@ function BookPage() {
             <Select value={pkg} onValueChange={setPkg}>
               <SelectTrigger><SelectValue placeholder={t(lang, "select_package")} /></SelectTrigger>
               <SelectContent>
-                {packages.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {(lang === "ar" ? p.name_ar : p.name_en || p.name_ar)} — {Number(p.price).toLocaleString()} {p.currency}
-                  </SelectItem>
-                ))}
+                {packages.map((p) => {
+                  const hasOffer =
+                    p.discounted_price != null &&
+                    (!p.offer_expiry_date || new Date(p.offer_expiry_date).getTime() > Date.now());
+                  return (
+                    <SelectItem key={p.id} value={p.id}>
+                      {(lang === "ar" ? p.name_ar : p.name_en || p.name_ar)} — {Number(p.price).toLocaleString()} {p.currency}
+                      {hasOffer ? ` (${lang === "ar" ? "بعد الخصم" : "after discount"}: ${Number(p.discounted_price).toLocaleString()} ${p.currency})` : ""}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </Field>
