@@ -51,7 +51,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
 }
 
 /* ---------------- session cookie ---------------- */
-export type AdminUser = { id: string; username: string; display_name: string | null; is_super: boolean };
+export type AdminUser = { id: string; display_name: string; is_super: boolean };
 
 export async function startSession(userId: string) {
   const payload = b64u(enc.encode(JSON.stringify({ uid: userId, exp: Math.floor(Date.now() / 1000) + MAX_AGE })));
@@ -77,7 +77,7 @@ export async function currentAdmin(): Promise<AdminUser | null> {
   }
   if (!data?.uid || data.exp < Date.now() / 1000) return null;
   const rows = await q<AdminUser>(
-    `select id, username, display_name, is_super from ${tbl("admin_users")} where id = $1`,
+    `select id::text as id, display_name, is_super from ${tbl("admin_users")} where id::text = $1`,
     [data.uid],
   );
   return rows[0] ?? null;
@@ -87,4 +87,25 @@ export async function requireAdmin(): Promise<AdminUser> {
   const u = await currentAdmin();
   if (!u) throw new Error("Unauthorized");
   return u;
+}
+
+export async function requireSuper(): Promise<AdminUser> {
+  const u = await requireAdmin();
+  if (!u.is_super) throw new Error("Only the general supervisor can do this");
+  return u;
+}
+
+/* ---------------- PINs ---------------- */
+export const PIN_RE = /^\d{6,12}$/;
+
+export function checkPinFormat(pin: string) {
+  if (!PIN_RE.test(String(pin ?? ""))) throw new Error("PIN must be 6–12 digits");
+}
+
+/** Throws if another account already uses this PIN (PINs identify the account, so they must be unique). */
+export async function assertPinUnique(pin: string, exceptId?: string) {
+  const rows = await q<{ id: string; pin_hash: string }>(`select id::text as id, pin_hash from ${tbl("admin_users")}`);
+  for (const r of rows) {
+    if (r.id !== exceptId && (await verifyPassword(pin, r.pin_hash))) throw new Error("This PIN is already used by another account");
+  }
 }

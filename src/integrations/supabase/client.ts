@@ -55,16 +55,18 @@ class QueryBuilder<T = any> implements PromiseLike<Result<T>> {
   }
 }
 
-/* ---------------- auth ---------------- */
-export type AppUser = { id: string; email: string; user_metadata: { username: string; display_name: string | null } };
+/* ---------------- auth (PIN-only admin login) ---------------- */
+export type AppUser = { id: string; email: string; user_metadata: { display_name: string; is_super: boolean } };
 export type Session = { user: AppUser };
 type Listener = (event: string, session: Session | null) => void;
 
 const listeners = new Set<Listener>();
 let cached: Session | null | undefined;
 
-const toSession = (u: { id: string; username: string; display_name: string | null } | null): Session | null =>
-  u ? { user: { id: u.id, email: `${u.username}@sevenphoto.local`, user_metadata: { username: u.username, display_name: u.display_name } } } : null;
+const toSession = (u: { id: string; display_name: string; is_super: boolean } | null): Session | null =>
+  u
+    ? { user: { id: u.id, email: `${u.display_name}@sevenphoto.local`, user_metadata: { display_name: u.display_name, is_super: u.is_super } } }
+    : null;
 
 function emit(event: string, s: Session | null) {
   cached = s;
@@ -86,16 +88,16 @@ const auth = {
     listeners.add(cb);
     return { data: { subscription: { unsubscribe: () => { listeners.delete(cb); } } } };
   },
-  async signInWithPassword({ email, password }: { email: string; password: string }) {
-    const username = email.split("@")[0];
+  /** Error message is "invalid" (wrong PIN) or "locked" (too many attempts). */
+  async signInWithPin(pin: string) {
     try {
-      const res = await authLogin({ data: { username, password } });
-      if (res.error || !res.user) return { data: { session: null, user: null }, error: res.error ?? { message: "Login failed" } };
+      const res = await authLogin({ data: { pin } });
+      if (res.error || !res.user) return { data: { session: null }, error: res.error ?? { message: "invalid" } };
       const s = toSession(res.user);
       emit("SIGNED_IN", s);
-      return { data: { session: s, user: s!.user }, error: null };
+      return { data: { session: s }, error: null };
     } catch (e: any) {
-      return { data: { session: null, user: null }, error: { message: e?.message ?? "Login failed" } };
+      return { data: { session: null }, error: { message: e?.message ?? "error" } };
     }
   },
   async signOut() {

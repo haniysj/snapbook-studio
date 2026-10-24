@@ -1,67 +1,56 @@
 import { createServerFn } from "@tanstack/react-start";
 
-// Admin-user management (Neon). Every handler requires a signed-in admin.
-
-const USERNAME_RE = /^[a-z0-9._-]{3,32}$/;
-
-function cleanUsername(u: string) {
-  const v = String(u ?? "").trim().toLowerCase();
-  if (!USERNAME_RE.test(v)) throw new Error("Username: 3–32 chars, letters/numbers/._- only");
-  return v;
-}
+// Admin accounts (PIN-only). Only the general supervisor (is_super) can manage accounts.
 
 export const listAdminUsers = createServerFn({ method: "GET" }).handler(async () => {
-  const { requireAdmin } = await import("./server/session");
+  const { requireSuper } = await import("./server/session");
   const { q, tbl } = await import("./server/db");
-  await requireAdmin();
-  const rows = await q<{ id: string; username: string; display_name: string | null; is_super: boolean }>(
-    `select id::text as id, username, display_name, is_super from ${tbl("admin_users")} order by created_at`,
+  const me = await requireSuper();
+  const rows = await q<{ id: string; display_name: string; is_super: boolean; created_at: string }>(
+    `select id::text as id, display_name, is_super, to_char(created_at, 'YYYY-MM-DD') as created_at
+       from ${tbl("admin_users")} order by is_super desc, created_at`,
   );
-  return {
-    users: rows.map((r) => ({
-      id: r.id,
-      username: r.username,
-      display_name: r.display_name,
-      roles: r.is_super ? ["admin", "super_admin"] : ["admin"],
-    })),
-  };
+  return { me: me.id, users: rows };
 });
 
 export const createAdminUser = createServerFn({ method: "POST" })
-  .inputValidator((data: { username: string; password: string; display_name?: string; is_super?: boolean }) => data)
+  .inputValidator((data: { display_name: string; pin: string; is_super?: boolean }) => data)
   .handler(async ({ data }) => {
-    const { requireAdmin, hashPassword } = await import("./server/session");
+    const { requireSuper, hashPassword, checkPinFormat, assertPinUnique } = await import("./server/session");
     const { q, tbl } = await import("./server/db");
-    await requireAdmin();
-    const username = cleanUsername(data.username);
-    if (String(data.password ?? "").length < 6) throw new Error("Password must be at least 6 characters");
-    const exists = await q(`select 1 from ${tbl("admin_users")} where lower(username) = $1`, [username]);
-    if (exists.length) throw new Error("Username already exists");
+    await requireSuper();
+    const name = String(data.display_name ?? "").trim();
+    if (name.length < 2 || name.length > 60) throw new Error("Name must be 2–60 characters");
+    checkPinFormat(data.pin);
+    await assertPinUnique(data.pin);
     const rows = await q<{ id: string }>(
-      `insert into ${tbl("admin_users")} (username, display_name, password_hash, is_super) values ($1, $2, $3, $4) returning id::text as id`,
-      [username, data.display_name || username, await hashPassword(data.password), !!data.is_super],
+      `insert into ${tbl("admin_users")} (display_name, pin_hash, is_super) values ($1, $2, $3) returning id::text as id`,
+      [name, await hashPassword(data.pin), !!data.is_super],
     );
     return { id: rows[0].id };
   });
 
 export const updateAdminUser = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string; username?: string; password?: string; display_name?: string }) => data)
+  .inputValidator((data: { id: string; display_name?: string; pin?: string; is_super?: boolean }) => data)
   .handler(async ({ data }) => {
-    const { requireAdmin, hashPassword } = await import("./server/session");
+    const { requireSuper, hashPassword, checkPinFormat, assertPinUnique } = await import("./server/session");
     const { q, tbl } = await import("./server/db");
-    await requireAdmin();
+    const me = await requireSuper();
     const sets: string[] = [];
     const params: unknown[] = [];
-    if (data.username) {
-      const username = cleanUsername(data.username);
-      const clash = await q(`select 1 from ${tbl("admin_users")} where lower(username) = $1 and id::text <> $2`, [username, data.id]);
-      if (clash.length) throw new Error("Username already exists");
-      params.push(username); sets.push(`username = $${params.length}`);
+    if (data.display_name !== undefined) {
+      const name = String(data.display_name).trim();
+      if (name.length < 2 || name.length > 60) throw new Error("Name must be 2–60 characters");
+      params.push(name); sets.push(`display_name = $${params.length}`);
     }
-    if (data.display_name !== undefined) { params.push(data.display_name); sets.push(`display_name = $${params.length}`); }
-    if (data.password) {
-      if (data.password.length < 6) throw new Error("Password must be at least 6 characters");
-      params.push(await hashPassword(data.password)); sets.push(`password_hash = $${params.length}`);
+    if (data.pin) {
+      checkPinFormat(data.pin);
+      await assertPinUnique(data.pin, data.id);
+      params.push(await hashPassword(data.pin)); sets.push(`pin_hash = $${params.length}`);
+    }
+    if (data.is_super !== undefined) {
+      if (data.id === me.id && !data.is_super) throw new Error("You cannot remove your own general-supervisor role");
+      params.push(!!data.is_super); sets.push(`is_super = $${params.length}`);
     }
     if (sets.length) {
       params.push(data.id);
@@ -73,12 +62,10 @@ export const updateAdminUser = createServerFn({ method: "POST" })
 export const deleteAdminUser = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
-    const { requireAdmin } = await import("./server/session");
+    const { requireSuper } = await import("./server/session");
     const { q, tbl } = await import("./server/db");
-    const me = await requireAdmin();
-    if (data.id === me.id) throw new Error("Cannot delete yourself");
-    const left = await q(`select count(*)::int as n from ${tbl("admin_users")} where id::text <> $1`, [data.id]);
-    if ((left[0] as any).n < 1) throw new Error("At least one admin must remain");
+    const me = await requireSuper();
+    if (data.id === me.id) throw new Error("You cannot delete your own account");
     await q(`delete from ${tbl("admin_users")} where id::text = $1`, [data.id]);
     return { ok: true };
   });

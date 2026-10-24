@@ -6,7 +6,7 @@ import { BookingCalendar } from "@/components/site/BookingCalendar";
 import { ContactSection } from "@/components/site/ContactSection";
 import { MediaImage } from "@/components/site/MediaImage";
 import { useLang, useSettings } from "@/lib/app-context";
-import { emailToUsername, useSession } from "@/lib/helpers";
+import { useSession } from "@/lib/helpers";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Camera, Sparkles } from "lucide-react";
@@ -19,7 +19,7 @@ function HomePage() {
   const { lang } = useLang();
   const { settings } = useSettings();
   const session = useSession();
-  const username = emailToUsername(session?.user?.email);
+  const username = session?.user?.user_metadata.display_name ?? "";
 
   return (
     <div className="min-h-screen bg-background">

@@ -6,15 +6,22 @@ do $$ begin
   create type seven.booking_status as enum ('pending', 'confirmed', 'cancelled');
 exception when duplicate_object then null; end $$;
 
+-- Admin accounts sign in with a PIN only (no username). is_super = المشرف العام.
 create table if not exists seven.admin_users (
   id uuid primary key default gen_random_uuid(),
-  username text not null unique,
-  display_name text,
-  password_hash text not null,
+  display_name text not null,
+  pin_hash text not null,
   is_super boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Failed PIN attempts, used to block brute-force guessing.
+create table if not exists seven.login_attempts (
+  ip text not null,
+  at timestamptz not null default now()
+);
+create index if not exists login_attempts_ip_at_idx on seven.login_attempts (ip, at);
 
 create table if not exists seven.settings (
   id int primary key default 1 check (id = 1),

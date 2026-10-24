@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { emailToUsername, usernameToEmail } from "@/lib/helpers";
+
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
 import { useLang, useSettings } from "@/lib/app-context";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { MediaImage } from "@/components/site/MediaImage";
-import { Loader2, LogIn } from "lucide-react";
+import { KeyRound, Loader2, LogIn } from "lucide-react";
 
 
 export const Route = createFileRoute("/admin")({
@@ -30,22 +30,12 @@ function AdminPage() {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      if (s?.user) {
-        supabase.rpc("is_admin", { _user_id: s.user.id }).then(({ data }) => setIsAdmin(!!data));
-      } else {
-        setIsAdmin(false);
-      }
+      setIsAdmin(!!s?.user);
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session?.user) {
-        supabase.rpc("is_admin", { _user_id: data.session.user.id }).then(({ data: ok }) => {
-          setIsAdmin(!!ok);
-          setChecking(false);
-        });
-      } else {
-        setChecking(false);
-      }
+      setIsAdmin(!!data.session?.user);
+      setChecking(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -68,48 +58,46 @@ function AdminPage() {
     );
   }
 
-  const adminUsername = emailToUsername(session?.user?.email);
+  const adminName = session?.user?.user_metadata.display_name ?? "";
+  const isSuper = !!session?.user?.user_metadata.is_super;
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 pt-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-sm gold-text font-semibold">
-          {t(lang, "welcome_back")}, {adminUsername} 👋
+          {t(lang, "welcome_back")}، {adminName} · {isSuper ? (lang === "ar" ? "المشرف العام" : "General supervisor") : (lang === "ar" ? "مشرف" : "Supervisor")}
         </div>
       </div>
-      <AdminDashboard />
+      <AdminDashboard isSuper={isSuper} />
     </div>
   );
 
 
   function LoginCard() {
-    const [u, setU] = useState("");
-    const [p, setP] = useState("");
+    const [pin, setPin] = useState("");
     const [loading, setLoading] = useState(false);
 
     const doLogin = async (e: React.FormEvent) => {
       e.preventDefault();
+      if (!/^\d{6,12}$/.test(pin)) {
+        return toast.error(lang === "ar" ? "الرقم السري من 6 إلى 12 رقماً" : "PIN must be 6–12 digits");
+      }
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email: usernameToEmail(u),
-        password: p,
-      });
+      const { error } = await supabase.auth.signInWithPin(pin);
       setLoading(false);
-      if (error) return toast.error(lang === "ar" ? "بيانات الدخول غير صحيحة" : error.message);
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        const { data: ok } = await supabase.rpc("is_admin", { _user_id: userData.user.id });
-        if (!ok) {
-          await supabase.auth.signOut();
-          toast.error(lang === "ar" ? "ليس لديك صلاحيات إدارية" : "No admin access");
+      if (error) {
+        setPin("");
+        if (error.message === "locked") {
+          return toast.error(lang === "ar" ? "محاولات كثيرة خاطئة. حاول بعد 15 دقيقة." : "Too many wrong attempts. Try again in 15 minutes.");
         }
+        return toast.error(lang === "ar" ? "الرقم السري غير صحيح" : "Incorrect PIN");
       }
     };
 
     return (
-      <div className="mx-auto max-w-md px-4 py-16">
+      <div className="mx-auto max-w-sm px-4 py-16">
         <div className="card-elegant p-8">
-          <div className="mb-4 flex flex-col items-center gap-3">
+          <div className="mb-5 flex flex-col items-center gap-3">
             {settings.logo_url && (
               <MediaImage
                 path={settings.logo_url}
@@ -120,22 +108,33 @@ function AdminPage() {
             <h1 className="flex items-center gap-2 font-display text-2xl font-bold gold-text">
               <LogIn className="h-5 w-5" /> {settings.site_name}
             </h1>
-            <p className="text-xs text-muted-foreground">
-              {lang === "ar" ? "الرجاء تسجيل الدخول للوصول إلى لوحة التحكم." : "Please sign in to access the dashboard."}
+            <p className="text-center text-xs text-muted-foreground">
+              {lang === "ar" ? "أدخل الرقم السري للدخول إلى لوحة التحكم." : "Enter your PIN to open the dashboard."}
             </p>
           </div>
 
           <form onSubmit={doLogin} className="space-y-4">
             <div>
-              <Label>{t(lang, "admin_username")}</Label>
-              <Input value={u} onChange={(e) => setU(e.target.value)} required autoComplete="username" />
-            </div>
-            <div>
-              <Label>{t(lang, "admin_password")}</Label>
-              <Input type="password" value={p} onChange={(e) => setP(e.target.value)} required autoComplete="current-password" />
+              <Label htmlFor="pin" className="flex items-center gap-1.5">
+                <KeyRound className="h-3.5 w-3.5 text-gold" /> {lang === "ar" ? "الرقم السري" : "PIN"}
+              </Label>
+              <Input
+                id="pin"
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={12}
+                autoComplete="current-password"
+                autoFocus
+                dir="ltr"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                className="text-center text-2xl tracking-[0.5em] font-semibold"
+                required
+              />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
-              {loading ? "..." : t(lang, "admin_login")}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t(lang, "admin_login")}
             </Button>
           </form>
         </div>

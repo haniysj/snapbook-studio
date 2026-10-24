@@ -11,7 +11,7 @@ import { GalleryTab } from "./tabs/GalleryTab";
 import { SettingsTab } from "./tabs/SettingsTab";
 import { UsersTab } from "./tabs/UsersTab";
 
-export function AdminDashboard() {
+export function AdminDashboard({ isSuper = false }: { isSuper?: boolean }) {
   const { lang } = useLang();
   const [tab, setTab] = useState("bookings");
   return (
@@ -28,13 +28,13 @@ export function AdminDashboard() {
           <TabsTrigger value="packages">{t(lang, "tab_packages")}</TabsTrigger>
           <TabsTrigger value="gallery">{t(lang, "tab_gallery")}</TabsTrigger>
           <TabsTrigger value="settings">{t(lang, "tab_settings")}</TabsTrigger>
-          <TabsTrigger value="users">{t(lang, "tab_users")}</TabsTrigger>
+          {isSuper && <TabsTrigger value="users">{t(lang, "tab_users")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="bookings"><BookingsTab /></TabsContent>
         <TabsContent value="packages"><PackagesTab /></TabsContent>
         <TabsContent value="gallery"><GalleryTab /></TabsContent>
         <TabsContent value="settings"><SettingsTab /></TabsContent>
-        <TabsContent value="users"><UsersTab /></TabsContent>
+        {isSuper && <TabsContent value="users"><UsersTab /></TabsContent>}
       </Tabs>
     </div>
   );

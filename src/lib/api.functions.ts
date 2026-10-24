@@ -37,21 +37,39 @@ export const authMe = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const authLogin = createServerFn({ method: "POST" })
-  .inputValidator((d: { username: string; password: string }) => d)
+  .inputValidator((d: { pin: string }) => d)
   .handler(async ({ data }) => {
     const { q, tbl } = await import("./server/db");
-    const { verifyPassword, startSession } = await import("./server/session");
-    const username = String(data.username ?? "").trim().toLowerCase();
-    const rows = await q<{ id: string; password_hash: string; username: string; display_name: string | null; is_super: boolean }>(
-      `select id, password_hash, username, display_name, is_super from ${tbl("admin_users")} where lower(username) = $1`,
-      [username],
+    const { verifyPassword, startSession, PIN_RE } = await import("./server/session");
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const ip = (getRequestHeader("x-forwarded-for") ?? "unknown").split(",")[0].trim();
+    const fail = (message: string) => ({ user: null, error: { message } });
+
+    // Brute-force guard: at most 5 wrong PINs per IP per 15 minutes.
+    await q(`delete from ${tbl("login_attempts")} where at < now() - interval '1 day'`);
+    const recent = await q<{ n: number }>(
+      `select count(*)::int as n from ${tbl("login_attempts")} where ip = $1 and at > now() - interval '15 minutes'`,
+      [ip],
     );
-    const u = rows[0];
-    // constant-ish work even when the user doesn't exist
-    const ok = u ? await verifyPassword(String(data.password ?? ""), u.password_hash) : false;
-    if (!u || !ok) return { user: null, error: { message: "Invalid login credentials" } };
-    await startSession(u.id);
-    return { user: { id: u.id, username: u.username, display_name: u.display_name, is_super: u.is_super }, error: null };
+    if ((recent[0]?.n ?? 0) >= 5) return fail("locked");
+
+    const pin = String(data.pin ?? "").trim();
+    let match: { id: string; display_name: string; is_super: boolean } | null = null;
+    if (PIN_RE.test(pin)) {
+      const users = await q<{ id: string; display_name: string; is_super: boolean; pin_hash: string }>(
+        `select id::text as id, display_name, is_super, pin_hash from ${tbl("admin_users")} order by is_super desc, created_at`,
+      );
+      for (const u of users) {
+        if (await verifyPassword(pin, u.pin_hash)) { match = { id: u.id, display_name: u.display_name, is_super: u.is_super }; break; }
+      }
+    }
+    if (!match) {
+      await q(`insert into ${tbl("login_attempts")} (ip) values ($1)`, [ip]);
+      return fail("invalid");
+    }
+    await q(`delete from ${tbl("login_attempts")} where ip = $1`, [ip]);
+    await startSession(match.id);
+    return { user: match, error: null };
   });
 
 export const authLogout = createServerFn({ method: "POST" }).handler(async () => {
