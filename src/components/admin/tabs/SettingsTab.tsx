@@ -32,9 +32,9 @@ export function SettingsTab() {
 
   const uploadLogo = async (f: File) => {
     const path = `logo/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
-    const { error } = await supabase.storage.from("media").upload(path, f, { upsert: true });
-    if (error) return toast.error(error.message);
-    setLogoUrl(path);
+    const { data: up, error } = await supabase.storage.from("media").upload(path, f, { contentType: f.type });
+    if (error || !up) return toast.error(error?.message ?? "Upload failed");
+    setLogoUrl(up.url);
     toast.success(lang === "ar" ? "تم رفع الشعار" : "Logo uploaded");
   };
 

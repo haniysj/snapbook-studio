@@ -14,6 +14,7 @@ import { Route as BookRouteImport } from './routes/book'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookingConfirmedIdRouteImport } from './routes/booking-confirmed.$id'
+import { Route as ApiUploadRouteImport } from './routes/api.upload'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -40,12 +41,18 @@ const BookingConfirmedIdRoute = BookingConfirmedIdRouteImport.update({
   path: '/booking-confirmed/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/upload': typeof ApiUploadRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/upload': typeof ApiUploadRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
 export interface FileRoutesById {
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/upload': typeof ApiUploadRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
 export interface FileRouteTypes {
@@ -70,15 +79,23 @@ export interface FileRouteTypes {
     | '/admin'
     | '/book'
     | '/sitemap.xml'
+    | '/api/upload'
     | '/booking-confirmed/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/book' | '/sitemap.xml' | '/booking-confirmed/$id'
+  to:
+    | '/'
+    | '/admin'
+    | '/book'
+    | '/sitemap.xml'
+    | '/api/upload'
+    | '/booking-confirmed/$id'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/book'
     | '/sitemap.xml'
+    | '/api/upload'
     | '/booking-confirmed/$id'
   fileRoutesById: FileRoutesById
 }
@@ -87,6 +104,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   BookRoute: typeof BookRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiUploadRoute: typeof ApiUploadRoute
   BookingConfirmedIdRoute: typeof BookingConfirmedIdRoute
 }
 
@@ -127,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingConfirmedIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -135,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   BookRoute: BookRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiUploadRoute: ApiUploadRoute,
   BookingConfirmedIdRoute: BookingConfirmedIdRoute,
 }
 export const routeTree = rootRouteImport

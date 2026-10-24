@@ -47,10 +47,10 @@ export function GalleryTab() {
   const uploadImage = async (file: File) => {
     const isVideo = file.type.startsWith("video/");
     const path = `gallery/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
-    const { error: upErr } = await supabase.storage.from("media").upload(path, file, { contentType: file.type });
-    if (upErr) return toast.error(upErr.message);
+    const { data: up, error: upErr } = await supabase.storage.from("media").upload(path, file, { contentType: file.type });
+    if (upErr || !up) return toast.error(upErr?.message ?? "Upload failed");
     const { error } = await supabase.from("gallery_images").insert({
-      url: path, title_ar: title, category_id: selCat || null, sort_order: images.length, active: true,
+      url: up.url, title_ar: title, category_id: selCat || null, sort_order: images.length, active: true,
       media_type: isVideo ? "video" : "image",
     } as any);
     if (error) return toast.error(error.message);
@@ -62,7 +62,7 @@ export function GalleryTab() {
 
   const removeImage = async (id: string, url: string) => {
     if (!confirm(lang === "ar" ? "حذف الصورة؟" : "Delete?")) return;
-    if (!url.startsWith("http")) await supabase.storage.from("media").remove([url]);
+    if (url.includes(".blob.vercel-storage.com/")) await supabase.storage.from("media").remove([url]);
     await supabase.from("gallery_images").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin_gallery_imgs"] });
     qc.invalidateQueries({ queryKey: ["gallery_images"] });

@@ -23,7 +23,7 @@ function AdminPage() {
   const { settings } = useSettings();
 
 
-  const [session, setSession] = useState<import("@supabase/supabase-js").Session | null>(null);
+  const [session, setSession] = useState<import("@/integrations/supabase/client").Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
 

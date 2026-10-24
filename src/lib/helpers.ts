@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@supabase/supabase-js";
+import type { Session } from "@/integrations/supabase/client";
 
 export function whatsappUrl(number: string, message?: string): string {
   const clean = (number || "").replace(/[^\d]/g, "");
