@@ -5,19 +5,19 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   Seven Photography — Dark Gold Studio design system
-   Light: warm ivory + charcoal + gold
-   Dark : near-black + antique gold + deep bronze
-   All colors use oklch. Semantic tokens only.
+   Seven Cam — iOS-style design system
+   Monochrome brand (from the 7 CAM logo) + iOS system colors.
+   Light: grouped #F2F2F7 background, white cards, black ink.
+   Dark : true black background, #1C1C1E cards, white ink.
    ============================================================ */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-3xl: calc(var(--radius) + 14px);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,163 +40,217 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
-  --color-gold: var(--gold);
-  --color-gold-soft: var(--gold-soft);
-  --color-booked: var(--booked);
-  --color-booked-foreground: var(--booked-foreground);
-  --color-selected: var(--selected);
-  --color-selected-foreground: var(--selected-foreground);
+  --color-ios-green: var(--ios-green);
+  --color-ios-red: var(--ios-red);
+  --color-ios-orange: var(--ios-orange);
+  --color-ios-blue: var(--ios-blue);
+  --color-fill: var(--fill);
+  --color-elevated: var(--elevated);
 
-  --color-chart-1: var(--gold);
-  --color-chart-2: var(--gold-soft);
-  --color-chart-3: var(--muted-foreground);
-  --color-chart-4: var(--booked);
-  --color-chart-5: var(--selected);
+  --color-sidebar: var(--card);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: var(--primary-foreground);
+  --color-sidebar-accent: var(--secondary);
+  --color-sidebar-accent-foreground: var(--foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--ring);
 
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  --font-display: "Cinzel", "Tajawal", serif;
-  --font-body: "Tajawal", "Inter", system-ui, sans-serif;
-
-  --shadow-elegant: 0 20px 60px -20px color-mix(in oklab, var(--gold) 35%, transparent);
-  --shadow-card: 0 8px 30px -12px oklch(0 0 0 / 0.25);
-  --gradient-gold: linear-gradient(135deg, var(--gold) 0%, var(--gold-soft) 100%);
-  --gradient-hero: linear-gradient(180deg, oklch(0.12 0.02 60 / 0) 0%, oklch(0.08 0.015 60 / 0.85) 100%);
+  --font-sans: "Cairo", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-display: "Cairo", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 1rem;
 
-  /* Light: warm ivory */
-  --background: oklch(0.985 0.008 80);
-  --foreground: oklch(0.18 0.02 60);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 60);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 60);
-  --primary: oklch(0.22 0.02 60);
-  --primary-foreground: oklch(0.98 0.01 80);
-  --secondary: oklch(0.95 0.015 80);
-  --secondary-foreground: oklch(0.22 0.02 60);
-  --muted: oklch(0.94 0.012 80);
-  --muted-foreground: oklch(0.45 0.02 60);
-  --accent: oklch(0.92 0.05 85);
-  --accent-foreground: oklch(0.22 0.02 60);
-  --destructive: oklch(0.55 0.22 27);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.9 0.015 80);
-  --input: oklch(0.92 0.015 80);
-  --ring: oklch(0.72 0.12 82);
+  --background: #f2f2f7;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --elevated: #ffffff;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #e9e9ee;
+  --secondary-foreground: #000000;
+  --muted: #eeeef2;
+  --muted-foreground: #6e6e73;
+  --accent: #e5e5ea;
+  --accent-foreground: #000000;
+  --fill: rgba(120, 120, 128, 0.12);
+  --destructive: #ff3b30;
+  --destructive-foreground: #ffffff;
+  --border: rgba(60, 60, 67, 0.16);
+  --input: rgba(60, 60, 67, 0.2);
+  --ring: #000000;
 
-  --gold: oklch(0.72 0.13 82);
-  --gold-soft: oklch(0.82 0.09 85);
-  --booked: oklch(0.4 0.18 22);           /* dark red */
-  --booked-foreground: oklch(0.98 0 0);
-  --selected: oklch(0.72 0.13 82);        /* gold */
-  --selected-foreground: oklch(0.18 0.02 60);
+  --ios-green: #34c759;
+  --ios-red: #ff3b30;
+  --ios-orange: #ff9500;
+  --ios-blue: #007aff;
 
-  --sidebar: oklch(0.97 0.01 80);
-  --sidebar-foreground: oklch(0.22 0.02 60);
-  --sidebar-primary: oklch(0.22 0.02 60);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.94 0.02 82);
-  --sidebar-accent-foreground: oklch(0.22 0.02 60);
-  --sidebar-border: oklch(0.9 0.015 80);
-  --sidebar-ring: oklch(0.72 0.12 82);
+  --glass: rgba(249, 249, 251, 0.78);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.12);
+  color-scheme: light;
 }
 
 .dark {
-  /* Dark: charcoal + antique gold */
-  --background: oklch(0.13 0.012 60);
-  --foreground: oklch(0.95 0.01 80);
-  --card: oklch(0.17 0.015 60);
-  --card-foreground: oklch(0.95 0.01 80);
-  --popover: oklch(0.17 0.015 60);
-  --popover-foreground: oklch(0.95 0.01 80);
-  --primary: oklch(0.78 0.14 82);
-  --primary-foreground: oklch(0.13 0.012 60);
-  --secondary: oklch(0.22 0.02 60);
-  --secondary-foreground: oklch(0.95 0.01 80);
-  --muted: oklch(0.22 0.015 60);
-  --muted-foreground: oklch(0.7 0.015 80);
-  --accent: oklch(0.28 0.05 82);
-  --accent-foreground: oklch(0.95 0.01 80);
-  --destructive: oklch(0.55 0.22 27);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.28 0.02 60);
-  --input: oklch(0.24 0.02 60);
-  --ring: oklch(0.78 0.14 82);
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #1c1c1e;
+  --card-foreground: #ffffff;
+  --popover: #2c2c2e;
+  --popover-foreground: #ffffff;
+  --elevated: #2c2c2e;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #2c2c2e;
+  --secondary-foreground: #ffffff;
+  --muted: #1c1c1e;
+  --muted-foreground: #98989f;
+  --accent: #3a3a3c;
+  --accent-foreground: #ffffff;
+  --fill: rgba(120, 120, 128, 0.24);
+  --destructive: #ff453a;
+  --destructive-foreground: #ffffff;
+  --border: rgba(84, 84, 88, 0.55);
+  --input: rgba(84, 84, 88, 0.65);
+  --ring: #ffffff;
 
-  --gold: oklch(0.78 0.14 82);
-  --gold-soft: oklch(0.62 0.11 82);
-  --booked: oklch(0.42 0.2 22);
-  --booked-foreground: oklch(0.98 0 0);
-  --selected: oklch(0.78 0.14 82);
-  --selected-foreground: oklch(0.13 0.012 60);
+  --ios-green: #30d158;
+  --ios-red: #ff453a;
+  --ios-orange: #ff9f0a;
+  --ios-blue: #0a84ff;
 
-  --sidebar: oklch(0.16 0.012 60);
-  --sidebar-foreground: oklch(0.95 0.01 80);
-  --sidebar-primary: oklch(0.78 0.14 82);
-  --sidebar-primary-foreground: oklch(0.13 0.012 60);
-  --sidebar-accent: oklch(0.22 0.02 60);
-  --sidebar-accent-foreground: oklch(0.95 0.01 80);
-  --sidebar-border: oklch(0.28 0.02 60);
-  --sidebar-ring: oklch(0.78 0.14 82);
+  --glass: rgba(22, 22, 24, 0.72);
+  --shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.04);
+  color-scheme: dark;
 }
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { font-family: var(--font-body); }
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    scroll-padding-top: 4.5rem;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-body);
-    background-image:
-      radial-gradient(ellipse at top, color-mix(in oklab, var(--gold) 8%, transparent), transparent 60%);
-    background-attachment: fixed;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: 0.02em; }
-  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3 { font-family: var(--font-body); font-weight: 700; }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
+  input, textarea, select, button { font-family: inherit; }
+  /* iOS zooms into inputs smaller than 16px — keep form text at 16px on phones */
+  @media (max-width: 767px) {
+    input, textarea, select { font-size: 16px !important; }
+  }
 }
 
-@utility gold-text {
-  background: var(--gradient-gold);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-@utility card-elegant {
+/* ---------- surfaces ---------- */
+@utility ios-card {
   background-color: var(--card);
-  border: 1px solid color-mix(in oklab, var(--gold) 20%, var(--border));
-  box-shadow: var(--shadow-card);
-  border-radius: var(--radius-xl);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-soft);
+}
+@utility ios-group {
+  background-color: var(--card);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+@utility ios-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+  padding: 0.65rem 1rem;
+  position: relative;
+}
+@utility ios-divide {
+  & > * + * { box-shadow: inset 0 0.5px 0 var(--color-border); }
+}
+@utility glass {
+  background-color: var(--glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+@utility hairline-b { box-shadow: inset 0 -0.5px 0 var(--color-border); }
+@utility hairline-t { box-shadow: inset 0 0.5px 0 var(--color-border); }
+
+/* ---------- typography ---------- */
+@utility large-title { font-size: 2rem; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; }
+@utility section-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  padding-inline: 1rem;
+  margin-bottom: 0.4rem;
 }
 
-/* Booked date - dark red, clearly visible in both themes */
-@utility rdp-day-booked {
-  background-color: var(--booked) !important;
-  color: var(--booked-foreground) !important;
-  font-weight: 700;
-  border-radius: 0.5rem;
+/* ---------- interaction ---------- */
+@utility tap {
+  transition: transform 160ms ease, opacity 160ms ease, background-color 160ms ease;
+  &:active { transform: scale(0.97); opacity: 0.85; }
 }
-@utility rdp-day-selected-gold {
-  background: var(--gradient-gold) !important;
-  color: var(--selected-foreground) !important;
-  font-weight: 700;
-  border-radius: 0.5rem;
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
-/* Weekend (Fri/Sat) — subtle gold-tinted background */
-@utility rdp-day-weekend {
-  background-color: color-mix(in oklab, var(--gold) 12%, transparent);
-  color: var(--gold);
-  border-radius: 0.5rem;
-}
+@utility pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
+@utility mb-tabbar { margin-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
 
+/* ---------- calendar (react-day-picker) ---------- */
+.rdp-root.rdp-root {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-accent-background-color: var(--color-fill);
+  --rdp-day-height: 2.6rem;
+  --rdp-day-width: 2.6rem;
+  --rdp-day_button-height: 2.4rem;
+  --rdp-day_button-width: 2.4rem;
+  --rdp-day_button-border-radius: 999px;
+  --rdp-selected-border: 0;
+  --rdp-today-color: var(--color-ios-red);
+  --rdp-nav_button-height: 2.25rem;
+  --rdp-nav_button-width: 2.25rem;
+  font-family: var(--font-sans);
+}
+@media (max-width: 380px) {
+  .rdp-root.rdp-root { --rdp-day-height: 2.35rem; --rdp-day-width: 2.35rem; --rdp-day_button-height: 2.2rem; --rdp-day_button-width: 2.2rem; }
+}
+.rdp-root .rdp-caption_label { font-weight: 700; font-size: 1.05rem; }
+.rdp-root .rdp-weekday { color: var(--color-muted-foreground); font-weight: 600; font-size: 0.75rem; }
+.rdp-root .rdp-chevron { fill: var(--color-ios-blue); }
+.rdp-root .rdp-day_button { font-weight: 500; transition: background-color 150ms ease, transform 150ms ease; }
+.rdp-root .rdp-day_button:active { transform: scale(0.92); }
+.rdp-root .rdp-disabled .rdp-day_button { opacity: 0.3; }
+.rdp-day-booked .rdp-day_button,
+.rdp-root .rdp-disabled.rdp-day-booked .rdp-day_button {
+  opacity: 1 !important;
+  color: var(--color-ios-red);
+  background-color: color-mix(in srgb, var(--color-ios-red) 14%, transparent);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+.rdp-root .rdp-selected .rdp-day_button,
+.rdp-day-selected .rdp-day_button {
+  background-color: var(--color-primary) !important;
+  color: var(--color-primary-foreground) !important;
+  font-weight: 700;
+}
+.rdp-day-weekend:not(.rdp-disabled):not(.rdp-selected) .rdp-day_button { color: var(--color-ios-blue); font-weight: 600; }
+
+/* ---------- motion ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@utility rise { animation: rise 500ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-ios-green) 55%, transparent); } 70% { box-shadow: 0 0 0 14px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@utility pulse-ring { animation: pulse-ring 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .rise, .pulse-ring { animation: none !important; }
+  html { scroll-behavior: auto; }
+}

@@ -14,8 +14,19 @@ export function sql() {
   return _sql;
 }
 
+let _local: any = null;
+
 /** Run a parameterised query and return rows. */
 export async function q<T = any>(text: string, params: unknown[] = []): Promise<T[]> {
+  // Local testing only: LOCAL_PG_URL points at a plain Postgres (never set on Vercel).
+  if (process.env.LOCAL_PG_URL) {
+    if (!_local) {
+      const name = "pg";
+      const { default: pg } = await import(/* @vite-ignore */ name);
+      _local = new pg.Pool({ connectionString: process.env.LOCAL_PG_URL });
+    }
+    return (await _local.query(text, params)).rows as T[];
+  }
   return (await sql().query(text, params)) as T[];
 }
 

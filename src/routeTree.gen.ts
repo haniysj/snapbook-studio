@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiMediaRouteImport } from './routes/api.media'
 import { Route as ApiUploadRouteImport } from './routes/api.upload'
 import { Route as BookingConfirmedIdRouteImport } from './routes/booking-confirmed.$id'
 
@@ -36,6 +37,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMediaRoute = ApiMediaRouteImport.update({
+  id: '/api/media',
+  path: '/api/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiUploadRoute = ApiUploadRouteImport.update({
   id: '/api/upload',
   path: '/api/upload',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/media': typeof ApiMediaRoute
   '/api/upload': typeof ApiUploadRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/media': typeof ApiMediaRoute
   '/api/upload': typeof ApiUploadRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/book': typeof BookRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/media': typeof ApiMediaRoute
   '/api/upload': typeof ApiUploadRoute
   '/booking-confirmed/$id': typeof BookingConfirmedIdRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/book'
     | '/sitemap.xml'
+    | '/api/media'
     | '/api/upload'
     | '/booking-confirmed/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/book'
     | '/sitemap.xml'
+    | '/api/media'
     | '/api/upload'
     | '/booking-confirmed/$id'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/book'
     | '/sitemap.xml'
+    | '/api/media'
     | '/api/upload'
     | '/booking-confirmed/$id'
   fileRoutesById: FileRoutesById
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   BookRoute: typeof BookRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiMediaRoute: typeof ApiMediaRoute
   ApiUploadRoute: typeof ApiUploadRoute
   BookingConfirmedIdRoute: typeof BookingConfirmedIdRoute
 }
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/media': {
+      id: '/api/media'
+      path: '/api/media'
+      fullPath: '/api/media'
+      preLoaderRoute: typeof ApiMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/upload': {
       id: '/api/upload'
       path: '/api/upload'
@@ -160,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   BookRoute: BookRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiMediaRoute: ApiMediaRoute,
   ApiUploadRoute: ApiUploadRoute,
   BookingConfirmedIdRoute: BookingConfirmedIdRoute,
 }

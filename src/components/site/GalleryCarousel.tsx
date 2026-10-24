@@ -1,229 +1,228 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff, Play, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MediaImage } from "@/components/site/MediaImage";
 import { MediaVideo } from "@/components/site/MediaVideo";
+import { SectionHeading } from "@/components/site/SectionHeading";
+import { SegmentedControl } from "@/components/ui/segmented";
 import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+
+type Img = { id: string; url: string; title_ar: string | null; media_type: string; category_id: string | null };
 
 export function GalleryCarousel() {
   const { lang } = useLang();
+  const rtl = lang === "ar";
   const { data: categories = [] } = useQuery({
     queryKey: ["gallery_categories"],
     queryFn: async () => (await supabase.from("gallery_categories").select("*").order("sort_order")).data ?? [],
   });
-  const [selectedCat, setSelectedCat] = useState<string | "all">("all");
-
-  const { data: images = [], isLoading } = useQuery({
-    queryKey: ["gallery_images", selectedCat],
-    queryFn: async () => {
-      let q = supabase.from("gallery_images").select("*").eq("active", true).order("sort_order");
-      if (selectedCat !== "all") q = q.eq("category_id", selectedCat);
-      return (await q).data ?? [];
-    },
+  const { data: all = [], isLoading } = useQuery({
+    queryKey: ["gallery_images"],
+    queryFn: async () =>
+      ((await supabase.from("gallery_images").select("*").eq("active", true).order("sort_order")).data ?? []) as Img[],
   });
 
+  const [cat, setCat] = useState<string>("all");
+  const images = useMemo(() => (cat === "all" ? all : all.filter((i) => i.category_id === cat)), [all, cat]);
+  // Only show categories that actually have items, so visitors never land on an empty tab.
+  const usedCats = useMemo(() => categories.filter((c: any) => all.some((i) => i.category_id === c.id)), [categories, all]);
+
   const [index, setIndex] = useState(0);
-  const [lightbox, setLightbox] = useState(false);
-  useEffect(() => { setIndex(0); }, [selectedCat, images.length]);
-  useEffect(() => {
-    if (!lightbox) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightbox(false);
-      if (e.key === "ArrowRight") go(lang === "ar" ? -1 : 1);
-      if (e.key === "ArrowLeft") go(lang === "ar" ? 1 : -1);
-    };
-    document.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [lightbox, lang]);
-  useEffect(() => {
-    if (images.length <= 1 || lightbox) return;
-    const id = setInterval(() => setIndex((i) => (i + 1) % images.length), 4500);
-    return () => clearInterval(id);
-  }, [images.length, lightbox]);
+  const [viewer, setViewer] = useState(false);
+  useEffect(() => { setIndex(0); }, [cat]);
 
   const go = (dir: 1 | -1) => {
-    if (images.length === 0) return;
+    if (!images.length) return;
     setIndex((i) => (i + dir + images.length) % images.length);
   };
 
-  // swipe
-  const touchStartX = useRef<number | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current == null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) {
-      const forward = lang === "ar" ? dx > 0 : dx < 0;
-      go(forward ? 1 : -1);
-    }
-    touchStartX.current = null;
-  };
+  // auto-advance on the inline viewer
+  useEffect(() => {
+    if (images.length <= 1 || viewer) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % images.length), 5000);
+    return () => clearInterval(id);
+  }, [images.length, viewer]);
 
-  const prevDir = lang === "ar" ? 1 : -1;
-  const nextDir = lang === "ar" ? -1 : 1;
+  useEffect(() => {
+    if (!viewer) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewer(false);
+      if (e.key === "ArrowRight") go(rtl ? -1 : 1);
+      if (e.key === "ArrowLeft") go(rtl ? 1 : -1);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [viewer, rtl, images.length]);
+
+  const swipe = useSwipe((dx) => go((rtl ? dx > 0 : dx < 0) ? 1 : -1));
+  const current = images[index];
 
   return (
-    <section id="gallery" className="mx-auto max-w-6xl px-4 py-12">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="text-2xl md:text-3xl font-bold gold-text">{t(lang, "gallery_title")}</h2>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setSelectedCat("all")}
-            className={`rounded-full border px-3 py-1 text-xs transition ${selectedCat === "all" ? "border-gold bg-gold/15 text-foreground" : "border-border text-muted-foreground hover:border-gold/50"}`}
-          >
-            {lang === "ar" ? "الكل" : "All"}
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedCat(c.id)}
-              className={`rounded-full border px-3 py-1 text-xs transition ${selectedCat === c.id ? "border-gold bg-gold/15 text-foreground" : "border-border text-muted-foreground hover:border-gold/50"}`}
-            >
-              {lang === "ar" ? c.name_ar : c.name_en || c.name_ar}
-            </button>
-          ))}
-        </div>
-      </div>
+    <section id="gallery" className="mx-auto max-w-6xl px-4 py-8 md:py-12">
+      <SectionHeading title={t(lang, "gallery_title")} subtitle={lang === "ar" ? "لقطات من جلساتنا" : "Moments from our sessions"} />
+
+      {usedCats.length > 0 && (
+        <SegmentedControl
+          className="mb-4"
+          size="sm"
+          value={cat}
+          onChange={setCat}
+          ariaLabel={t(lang, "category")}
+          options={[
+            { value: "all", label: lang === "ar" ? "الكل" : "All" },
+            ...usedCats.map((c: any) => ({ value: c.id as string, label: rtl ? c.name_ar : c.name_en || c.name_ar })),
+          ]}
+        />
+      )}
 
       {isLoading ? (
-        <div className="aspect-[16/9] animate-pulse rounded-2xl bg-muted" />
+        <div className="aspect-[4/5] animate-pulse rounded-[1.75rem] bg-fill sm:aspect-[16/9] lg:aspect-[2/1]" />
       ) : images.length === 0 ? (
-        <div className="grid aspect-[16/9] place-items-center rounded-2xl border border-dashed border-border text-muted-foreground text-sm">
-          {lang === "ar" ? "لم تُضف صور بعد" : "No images yet"}
+        <div className="ios-card grid aspect-[4/3] place-items-center p-6 text-center sm:aspect-[16/7]">
+          <div>
+            <ImageOff className="mx-auto mb-2 h-9 w-9 text-muted-foreground" />
+            <p className="font-semibold">{lang === "ar" ? "ستُضاف الأعمال قريباً" : "Work coming soon"}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{lang === "ar" ? "تابعنا لمشاهدة أحدث جلساتنا." : "Check back for our latest sessions."}</p>
+          </div>
         </div>
       ) : (
-        <div
-          className="relative overflow-hidden rounded-3xl card-elegant aspect-[16/9] select-none"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
+        <>
           <div
-            className="flex h-full transition-transform duration-700 ease-out"
-            style={{ transform: `translateX(${lang === "ar" ? "" : "-"}${index * 100}%)` }}
+            className="relative aspect-[4/5] select-none overflow-hidden rounded-[1.75rem] bg-black sm:aspect-[16/9] lg:aspect-[2/1]"
+            {...swipe}
           >
-            {images.map((img) => (
-              <div key={img.id} className="relative h-full min-w-full">
+            <div
+              className="flex h-full transition-transform duration-700 ease-[cubic-bezier(.2,.8,.2,1)]"
+              style={{ transform: `translateX(${rtl ? "" : "-"}${index * 100}%)` }}
+            >
+              {images.map((img, i) => (
                 <button
+                  key={img.id}
                   type="button"
-                  onClick={() => setLightbox(true)}
-                  aria-label={lang === "ar" ? "تكبير الصورة" : "Zoom image"}
-                  className="block h-full w-full cursor-zoom-in"
+                  onClick={() => setViewer(true)}
+                  aria-label={lang === "ar" ? "عرض بملء الشاشة" : "View full screen"}
+                  className="relative h-full min-w-full cursor-zoom-in"
                 >
                   {img.media_type === "video" ? (
-                    <MediaVideo path={img.url} className="h-full w-full object-cover" muted playsInline loop autoPlay />
+                    <MediaVideo path={img.url} className="h-full w-full object-cover" muted playsInline loop autoPlay={i === index} preload="metadata" />
                   ) : (
-                    <MediaImage path={img.url} alt={img.title_ar ?? ""} className="h-full w-full object-cover" />
+                    <MediaImage path={img.url} alt={img.title_ar ?? ""} className="h-full w-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
                   )}
                 </button>
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                {img.title_ar && (
-                  <div className="pointer-events-none absolute bottom-4 start-4 rounded-md bg-black/50 px-3 py-1 text-sm text-white backdrop-blur-md">
-                    {img.title_ar}
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
+            {current?.title_ar && (
+              <div className="pointer-events-none absolute bottom-4 start-4 max-w-[65%] truncate text-sm font-semibold text-white">{current.title_ar}</div>
+            )}
+            {images.length > 1 && (
+              <>
+                <div className="absolute bottom-4 end-4 rounded-full bg-black/45 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur">
+                  <span dir="ltr">{index + 1} / {images.length}</span>
+                </div>
+                <NavButton side="start" onClick={() => go(-1)} rtl={rtl} />
+                <NavButton side="end" onClick={() => go(1)} rtl={rtl} />
+              </>
+            )}
           </div>
 
           {images.length > 1 && (
-            <>
-              <button
-                aria-label="prev"
-                onClick={() => go(prevDir as 1 | -1)}
-                className="absolute start-2 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                aria-label="next"
-                onClick={() => go(nextDir as 1 | -1)}
-                className="absolute end-2 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-                {images.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setIndex(i)}
-                    aria-label={`slide ${i + 1}`}
-                    className={`h-1.5 rounded-full transition-all ${i === index ? "w-6 bg-gold" : "w-2 bg-white/50"}`}
-                  />
-                ))}
-              </div>
-            </>
+            <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
+              {images.map((img, i) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  aria-label={`${i + 1}`}
+                  className={cn(
+                    "tap relative h-16 w-16 shrink-0 overflow-hidden rounded-xl transition md:h-20 md:w-20",
+                    i === index ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "opacity-70 hover:opacity-100",
+                  )}
+                >
+                  {img.media_type === "video" ? (
+                    <>
+                      <MediaVideo path={img.url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                      <Play className="absolute inset-0 m-auto h-5 w-5 fill-white text-white drop-shadow" />
+                    </>
+                  ) : (
+                    <MediaImage path={img.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  )}
+                </button>
+              ))}
+            </div>
           )}
-        </div>
+        </>
       )}
 
-      {lightbox && images.length > 0 && images[index] && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
-          onClick={() => setLightbox(false)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setLightbox(false); }}
-            aria-label={lang === "ar" ? "إغلاق" : "Close"}
-            className="absolute top-4 end-4 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
-          >
-            <X className="h-6 w-6" />
-          </button>
-
-          {images.length > 1 && (
-            <>
-              <button
-                type="button"
-                aria-label="prev"
-                onClick={(e) => { e.stopPropagation(); go(prevDir as 1 | -1); }}
-                className="absolute start-4 top-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-              <button
-                type="button"
-                aria-label="next"
-                onClick={(e) => { e.stopPropagation(); go(nextDir as 1 | -1); }}
-                className="absolute end-4 top-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
-              >
-                <ChevronRight className="h-6 w-6" />
-              </button>
-            </>
-          )}
-
-          <div className="relative max-h-[90vh] max-w-[95vw]" onClick={(e) => e.stopPropagation()}>
-            {(images[index] as any).media_type === "video" ? (
-              <MediaVideo
-                path={images[index].url}
-                className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
-                controls
-                autoPlay
-                playsInline
-              />
+      {viewer && current && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black" role="dialog" aria-modal="true" {...swipe}>
+          <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-2 text-white">
+            <span className="text-sm font-semibold opacity-80" dir="ltr">{index + 1} / {images.length}</span>
+            <button
+              type="button"
+              onClick={() => setViewer(false)}
+              aria-label={lang === "ar" ? "إغلاق" : "Close"}
+              className="tap grid h-10 w-10 place-items-center rounded-full bg-white/15"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="relative flex flex-1 items-center justify-center px-2">
+            {current.media_type === "video" ? (
+              <MediaVideo key={current.id} path={current.url} className="max-h-full max-w-full rounded-lg" controls autoPlay playsInline />
             ) : (
-              <MediaImage
-                path={images[index].url}
-                alt={images[index].title_ar ?? ""}
-                className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
-              />
+              <MediaImage key={current.id} path={current.url} alt={current.title_ar ?? ""} className="max-h-full max-w-full object-contain" />
             )}
-            {images[index].title_ar && (
-              <div className="absolute bottom-3 start-3 rounded-md bg-black/60 px-3 py-1 text-sm text-white backdrop-blur-md">
-                {images[index].title_ar}
-              </div>
+            {images.length > 1 && (
+              <>
+                <NavButton side="start" onClick={() => go(-1)} rtl={rtl} dark />
+                <NavButton side="end" onClick={() => go(1)} rtl={rtl} dark />
+              </>
             )}
+          </div>
+          <div className="min-h-12 px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2 text-center text-sm text-white/85">
+            {current.title_ar}
           </div>
         </div>
       )}
     </section>
   );
+}
+
+function NavButton({ side, onClick, rtl, dark }: { side: "start" | "end"; onClick: () => void; rtl: boolean; dark?: boolean }) {
+  // "start" = previous. Arrow direction follows reading direction.
+  const pointsLeft = (side === "start") !== rtl;
+  const Icon = pointsLeft ? ChevronLeft : ChevronRight;
+  return (
+    <button
+      type="button"
+      aria-label={side === "start" ? "previous" : "next"}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className={cn(
+        "tap absolute top-1/2 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-white backdrop-blur-md sm:grid",
+        dark ? "bg-white/15" : "bg-black/35",
+        side === "start" ? "start-3" : "end-3",
+      )}
+    >
+      <Icon className="h-5 w-5" />
+    </button>
+  );
+}
+
+function useSwipe(onSwipe: (dx: number) => void) {
+  const start = useRef<number | null>(null);
+  return {
+    onTouchStart: (e: React.TouchEvent) => { start.current = e.touches[0].clientX; },
+    onTouchEnd: (e: React.TouchEvent) => {
+      if (start.current == null) return;
+      const dx = e.changedTouches[0].clientX - start.current;
+      if (Math.abs(dx) > 40) onSwipe(dx);
+      start.current = null;
+    },
+  };
 }

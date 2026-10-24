@@ -1,142 +1,202 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useLang } from "@/lib/app-context";
-import { t } from "@/lib/i18n";
-import { useSettings } from "@/lib/app-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Check, ExternalLink, MessageCircle, Search, Trash2, X } from "lucide-react";
+import { Check, Clock, MapPin, MessageSquareText, Phone, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useLang, useSettings } from "@/lib/app-context";
+import { t } from "@/lib/i18n";
 import { whatsappUrl } from "@/lib/helpers";
-import { format } from "date-fns";
+import { SegmentedControl } from "@/components/ui/segmented";
+import { WhatsAppIcon } from "@/components/site/BrandLogo";
+import { formatPrice } from "@/components/site/PackagesGrid";
+import { cn } from "@/lib/utils";
+
+type Status = "pending" | "confirmed" | "cancelled";
+type Filter = "all" | Status;
+
+const STATUS_STYLE: Record<Status, string> = {
+  pending: "bg-ios-orange/15 text-ios-orange",
+  confirmed: "bg-ios-green/15 text-ios-green",
+  cancelled: "bg-ios-red/12 text-ios-red",
+};
 
 export function BookingsTab() {
   const { lang } = useLang();
+  const ar = lang === "ar";
   const { settings } = useSettings();
   const qc = useQueryClient();
+  const [filter, setFilter] = useState<Filter>("all");
+  const [search, setSearch] = useState("");
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["admin_bookings"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("bookings")
-        .select("*, packages(name_ar, name_en, price, currency)")
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
+    queryFn: async () =>
+      (await supabase.from("bookings").select("*, packages(name_ar, name_en, price, currency)").order("created_at", { ascending: false })).data ?? [],
   });
 
-  const setStatus = async (id: string, status: "pending" | "confirmed" | "cancelled", booking?: any) => {
-    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success(lang === "ar" ? "تم التحديث" : "Updated");
+  const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin_bookings"] });
-    qc.invalidateQueries({ queryKey: ["booked_dates"] });
-
-    if (status === "confirmed" && booking?.phone) {
-      const pkg = booking.packages;
-      const pkgName = pkg ? (lang === "ar" ? pkg.name_ar : (pkg.name_en || pkg.name_ar)) : "";
-      const ref = `#${id.slice(0, 8).toUpperCase()}`;
-      const msg = lang === "ar"
-        ? `مرحباً ${booking.customer_name}،\nتم تأكيد حجزك ${ref} لدى ${settings.site_name}. 🎉\n\nالتاريخ: ${booking.event_date}\nالوقت: ${booking.event_time?.slice(0,5) ?? ""}\nالباقة: ${pkgName}${pkg ? ` (${pkg.price} ${pkg.currency})` : ""}${booking.event_location_url ? `\nالموقع: ${booking.event_location_url}` : ""}${booking.notes ? `\nملاحظات: ${booking.notes}` : ""}\n\nنشكرك على ثقتك بنا.`
-        : `Hello ${booking.customer_name},\nYour booking ${ref} with ${settings.site_name} is confirmed. 🎉\n\nDate: ${booking.event_date}\nTime: ${booking.event_time?.slice(0,5) ?? ""}\nPackage: ${pkgName}${pkg ? ` (${pkg.price} ${pkg.currency})` : ""}${booking.event_location_url ? `\nLocation: ${booking.event_location_url}` : ""}${booking.notes ? `\nNotes: ${booking.notes}` : ""}\n\nThank you for choosing us.`;
-      try {
-        window.open(whatsappUrl(booking.phone, msg), "_blank", "noopener,noreferrer");
-      } catch { /* ignore */ }
-    }
+    qc.invalidateQueries({ queryKey: ["booked_dates_rpc"] });
   };
 
-  const remove = async (id: string) => {
-    if (!confirm(lang === "ar" ? "حذف الحجز؟" : "Delete booking?")) return;
-    const { error } = await supabase.from("bookings").delete().eq("id", id);
+  const setStatus = async (b: any, status: Status) => {
+    const { error } = await supabase.from("bookings").update({ status }).eq("id", b.id);
     if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["admin_bookings"] });
-    qc.invalidateQueries({ queryKey: ["booked_dates"] });
+    toast.success(status === "confirmed" ? (ar ? "تم تأكيد الحجز" : "Booking confirmed") : status === "cancelled" ? (ar ? "تم إلغاء الحجز" : "Booking cancelled") : (ar ? "تم التحديث" : "Updated"));
+    refresh();
   };
 
-  const [search, setSearch] = useState("");
-  const filtered = useMemo(() => {
+  const remove = async (b: any) => {
+    if (!confirm(ar ? `حذف حجز ${b.customer_name} نهائياً؟` : `Delete ${b.customer_name}'s booking permanently?`)) return;
+    const { error } = await supabase.from("bookings").delete().eq("id", b.id);
+    if (error) return toast.error(error.message);
+    refresh();
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const counts = useMemo(() => {
+    const c = { all: rows.length, pending: 0, confirmed: 0, cancelled: 0 } as Record<Filter, number>;
+    rows.forEach((r: any) => { c[r.status as Status]++; });
+    return c;
+  }, [rows]);
+
+  const list = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((b: any) => {
-      const ref = `#${b.id.slice(0, 8).toUpperCase()}`.toLowerCase();
-      return (
-        b.customer_name?.toLowerCase().includes(q) ||
-        b.phone?.toLowerCase().includes(q) ||
-        ref.includes(q) ||
-        b.id?.toLowerCase().includes(q)
-      );
-    });
-  }, [rows, search]);
+    return rows
+      .filter((b: any) => filter === "all" || b.status === filter)
+      .filter((b: any) => {
+        if (!q) return true;
+        const ref = `#${b.id.slice(0, 8)}`.toLowerCase();
+        return b.customer_name?.toLowerCase().includes(q) || b.phone?.replace(/\s/g, "").includes(q.replace(/\s/g, "")) || ref.includes(q);
+      })
+      // upcoming first (nearest date on top), past events after
+      .sort((a: any, b: any) => {
+        const ap = a.event_date < today, bp = b.event_date < today;
+        if (ap !== bp) return ap ? 1 : -1;
+        return ap ? (a.event_date < b.event_date ? 1 : -1) : a.event_date < b.event_date ? -1 : 1;
+      });
+  }, [rows, filter, search, today]);
 
-  if (isLoading) return <div className="text-sm text-muted-foreground">{t(lang, "loading")}</div>;
+  const confirmMsg = (b: any) => {
+    const p = b.packages;
+    const pkg = p ? (ar ? p.name_ar : p.name_en || p.name_ar) : "";
+    const ref = `#${b.id.slice(0, 8).toUpperCase()}`;
+    return ar
+      ? `مرحباً ${b.customer_name}،\nتم تأكيد حجزك ${ref} لدى ${settings.site_name} ✅\n\nالتاريخ: ${b.event_date}\nالوقت: ${b.event_time?.slice(0, 5) ?? ""}\nالباقة: ${pkg}${b.event_location_url ? `\nالموقع: ${b.event_location_url}` : ""}\n\nشكراً لثقتك بنا.`
+      : `Hello ${b.customer_name},\nYour booking ${ref} with ${settings.site_name} is confirmed ✅\n\nDate: ${b.event_date}\nTime: ${b.event_time?.slice(0, 5) ?? ""}\nPackage: ${pkg}${b.event_location_url ? `\nLocation: ${b.event_location_url}` : ""}\n\nThank you for choosing us.`;
+  };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <SegmentedControl
+        value={filter}
+        onChange={setFilter}
+        size="sm"
+        options={([
+          ["all", ar ? "الكل" : "All"],
+          ["pending", t(lang, "status_pending")],
+          ["confirmed", t(lang, "status_confirmed")],
+          ["cancelled", t(lang, "status_cancelled")],
+        ] as [Filter, string][]).map(([v, l]) => ({
+          value: v,
+          label: l,
+          badge: <span className="text-[11px] font-bold opacity-60">{counts[v]}</span>,
+        }))}
+      />
+
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground start-3" />
-        <Input
+        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={lang === "ar" ? "ابحث بالاسم أو الرمز أو رقم الهاتف" : "Search by name, code, or phone"}
-          className="ps-9"
+          placeholder={ar ? "بحث بالاسم أو الهاتف أو الرمز" : "Search name, phone or code"}
+          className="h-10 w-full rounded-xl bg-fill ps-9 pe-3 text-[15px] outline-none placeholder:text-muted-foreground"
+          type="search"
         />
       </div>
-      {filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          {rows.length === 0 ? t(lang, "no_bookings") : (lang === "ar" ? "لا توجد نتائج" : "No results")}
+
+      {isLoading ? (
+        <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-36 animate-pulse rounded-[1.25rem] bg-fill" />)}</div>
+      ) : list.length === 0 ? (
+        <div className="ios-card p-10 text-center text-sm text-muted-foreground">
+          {rows.length === 0 ? t(lang, "no_bookings") : ar ? "لا توجد نتائج" : "No results"}
         </div>
-      ) : filtered.map((b: any) => {
-        const pkg = b.packages;
-        const waMsg = `${t(lang, "wa_confirm_msg")}\n\n${t(lang, "form_name")}: ${b.customer_name}\n${t(lang, "form_date")}: ${b.event_date} ${b.event_time}\n${t(lang, "form_package")}: ${pkg?.name_ar ?? ""}\n${b.event_location_url ? `📍 ${b.event_location_url}` : ""}`;
-        return (
-          <div key={b.id} className="card-elegant flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold">{b.customer_name}</span>
-                <StatusBadge status={b.status} />
-                <span className="text-xs text-muted-foreground" dir="ltr">{b.phone}</span>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                📅 {format(new Date(b.event_date), "yyyy-MM-dd")} — 🕐 {b.event_time?.slice(0, 5)} — 📦 {pkg?.name_ar ?? "—"} ({pkg?.price} {pkg?.currency})
-              </div>
-              {b.event_location_url && (
-                <a href={b.event_location_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gold hover:underline">
-                  <ExternalLink className="h-3 w-3" /> {lang === "ar" ? "الموقع" : "Location"}
-                </a>
-              )}
-              {b.notes && <p className="text-xs text-muted-foreground">{b.notes}</p>}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {b.status !== "confirmed" && (
-                <Button size="sm" onClick={() => setStatus(b.id, "confirmed", b)} className="gap-1 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
-                  <Check className="h-3.5 w-3.5" /> {t(lang, "confirm")}
-                </Button>
-              )}
-              <a href={whatsappUrl(b.phone || settings.whatsapp_number, waMsg)} target="_blank" rel="noreferrer">
-                <Button size="sm" variant="outline" className="gap-1"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</Button>
-              </a>
-              {b.status !== "cancelled" && (
-                <Button size="sm" variant="outline" onClick={() => setStatus(b.id, "cancelled", b)} className="gap-1">
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              <Button size="sm" variant="outline" onClick={() => remove(b.id)} className="gap-1 text-destructive">
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        );
-      })}
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {list.map((b: any) => {
+            const d = new Date(`${b.event_date}T00:00:00`);
+            const past = b.event_date < today;
+            const p = b.packages;
+            return (
+              <article key={b.id} className={cn("ios-card p-4", past && "opacity-70")}>
+                <div className="flex items-start gap-3">
+                  <div className="grid w-14 shrink-0 place-items-center rounded-2xl bg-fill py-1.5 text-center">
+                    <span className="text-[11px] font-bold text-ios-red">{d.toLocaleDateString(ar ? "ar-OM" : "en-GB", { weekday: "short" })}</span>
+                    <span className="text-2xl font-extrabold leading-none">{d.getDate()}</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground">{d.toLocaleDateString(ar ? "ar-OM" : "en-GB", { month: "short" })}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="truncate text-[16px] font-bold">{b.customer_name}</h3>
+                      <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-bold", STATUS_STYLE[b.status as Status])}>
+                        {t(lang, `status_${b.status}` as any)}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap" dir="ltr"><Clock className="h-3.5 w-3.5" />{b.event_time?.slice(0, 5)}</span>
+                      <a href={`tel:${b.phone}`} className="inline-flex items-center gap-1 whitespace-nowrap text-ios-blue" dir="ltr"><Phone className="h-3.5 w-3.5" />{b.phone}</a>
+                      <span className="font-mono text-[11px]" dir="ltr">#{b.id.slice(0, 8).toUpperCase()}</span>
+                    </div>
+                    {p && (
+                      <div className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-fill px-2.5 py-0.5 text-[12px] font-semibold">
+                        <span className="truncate">{ar ? p.name_ar : p.name_en || p.name_ar}</span>
+                        <span className="whitespace-nowrap text-muted-foreground" dir="ltr">{formatPrice(p.price)} {p.currency}</span>
+                      </div>
+                    )}
+                    {b.event_location_url && (
+                      <a href={b.event_location_url} target="_blank" rel="noreferrer" className="mt-2 flex items-center gap-1 text-[13px] font-semibold text-ios-blue">
+                        <MapPin className="h-3.5 w-3.5" /> {ar ? "موقع المناسبة" : "Event location"}
+                      </a>
+                    )}
+                    {b.notes && (
+                      <p className="mt-2 flex gap-1.5 rounded-xl bg-fill px-3 py-2 text-[13px]">
+                        <MessageSquareText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />{b.notes}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {b.status !== "confirmed" && (
+                    <button type="button" onClick={() => setStatus(b, "confirmed")} className="tap inline-flex h-9 items-center gap-1.5 rounded-full bg-ios-green px-3.5 text-[13px] font-bold text-white">
+                      <Check className="h-4 w-4" /> {t(lang, "confirm")}
+                    </button>
+                  )}
+                  <a
+                    href={whatsappUrl(b.phone, b.status === "confirmed" ? confirmMsg(b) : "")}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="tap inline-flex h-9 items-center gap-1.5 rounded-full bg-[#25D366]/15 px-3.5 text-[13px] font-bold text-[#128C4B] dark:text-[#25D366]"
+                    title={b.status === "confirmed" ? (ar ? "إرسال رسالة التأكيد للعميل" : "Send confirmation to client") : "WhatsApp"}
+                  >
+                    <WhatsAppIcon className="h-4 w-4" /> {b.status === "confirmed" ? (ar ? "إرسال التأكيد" : "Send confirmation") : (ar ? "مراسلة" : "Message")}
+                  </a>
+                  <div className="ms-auto flex gap-2">
+                    {b.status !== "cancelled" && (
+                      <button type="button" onClick={() => setStatus(b, "cancelled")} aria-label={ar ? "إلغاء الحجز" : "Cancel booking"} title={ar ? "إلغاء الحجز" : "Cancel booking"} className="tap grid h-9 w-9 place-items-center rounded-full bg-fill">
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button type="button" onClick={() => remove(b)} aria-label={t(lang, "delete")} title={t(lang, "delete")} className="tap grid h-9 w-9 place-items-center rounded-full bg-ios-red/12 text-ios-red">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const { lang } = useLang();
-  const map: Record<string, string> = { pending: "status_pending", confirmed: "status_confirmed", cancelled: "status_cancelled" };
-  const color = status === "confirmed" ? "bg-green-500/20 text-green-700 dark:text-green-300" : status === "cancelled" ? "bg-destructive/20 text-destructive" : "bg-muted";
-  return <Badge className={color} variant="secondary">{t(lang, map[status] as any)}</Badge>;
 }

@@ -91,8 +91,8 @@ export function UsersTab() {
 
   return (
     <div className="space-y-6">
-      <div className="card-elegant space-y-3 p-4">
-        <h3 className="flex items-center gap-2 font-semibold"><Plus className="h-4 w-4 text-gold" /> {ar ? "إضافة مشرف" : "Add supervisor"}</h3>
+      <div className="ios-card space-y-3 p-4">
+        <h3 className="flex items-center gap-2 font-semibold"><Plus className="h-4 w-4 text-muted-foreground" /> {ar ? "إضافة مشرف" : "Add supervisor"}</h3>
         <p className="text-xs text-muted-foreground">
           {ar
             ? "الدخول بالرقم السري فقط. لكل مشرف رقم سري خاص به (6–12 رقماً) ولا يتكرر."
@@ -104,7 +104,7 @@ export function UsersTab() {
           <div><Label>{ar ? "تأكيد الرقم السري" : "Confirm PIN"}</Label><PinInput value={pin2} onChange={setPin2} /></div>
           <div className="flex items-end gap-2 pb-2"><Switch checked={isSuper} onCheckedChange={setIsSuper} /><Label>{roleLabel(true)}</Label></div>
         </div>
-        <Button onClick={onCreate} className="gap-1 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
+        <Button onClick={onCreate} className="gap-1 bg-primary text-primary-foreground rounded-full">
           <Plus className="h-4 w-4" /> {t(lang, "add")}
         </Button>
       </div>
@@ -112,7 +112,7 @@ export function UsersTab() {
       {isLoading ? <div className="text-sm text-muted-foreground">{t(lang, "loading")}</div> : (
         <div className="space-y-2">
           {data?.users.map((u) => (
-            <div key={u.id} className="card-elegant p-4">
+            <div key={u.id} className="ios-card p-4">
               {editingId === u.id ? (
                 <div className="space-y-3">
                   <div className="grid gap-3 md:grid-cols-3">
@@ -124,14 +124,14 @@ export function UsersTab() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={onSave} className="gap-1 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground"><Save className="h-4 w-4" />{t(lang, "save")}</Button>
+                    <Button onClick={onSave} className="gap-1 bg-primary text-primary-foreground rounded-full"><Save className="h-4 w-4" />{t(lang, "save")}</Button>
                     <Button variant="outline" onClick={() => setEditingId(null)}>{t(lang, "cancel")}</Button>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className={`grid h-9 w-9 place-items-center rounded-full ${u.is_super ? "bg-gold/20 text-gold" : "bg-muted text-muted-foreground"}`}>
+                    <span className={`grid h-9 w-9 place-items-center rounded-full ${u.is_super ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                       {u.is_super ? <ShieldCheck className="h-4 w-4" /> : <UserRound className="h-4 w-4" />}
                     </span>
                     <div>

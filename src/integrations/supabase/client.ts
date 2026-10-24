@@ -108,6 +108,15 @@ const auth = {
 };
 
 /* ---------------- storage (Vercel Blob) ---------------- */
+/** Browser-usable URL for a stored file. Private Blob files go through /api/media (signed redirect). */
+export function mediaSrc(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("/")) return url; // bundled asset, e.g. /brand/logo-black.png
+  if (!url.startsWith("http")) return "";
+  if (/\.blob\.vercel-storage\.com\//.test(url)) return `/api/media?u=${encodeURIComponent(url)}`;
+  return url;
+}
+
 const storage = {
   from(_bucket: string) {
     return {
@@ -115,7 +124,7 @@ const storage = {
         try {
           const { uploadPresigned } = await import("@vercel/blob/client");
           const blob = await uploadPresigned(path, file, {
-            access: "public",
+            access: "private",
             handleUploadUrl: "/api/upload",
             contentType: opts?.contentType || file.type || undefined,
           });
@@ -133,10 +142,10 @@ const storage = {
         }
       },
       getPublicUrl(path: string) {
-        return { data: { publicUrl: path?.startsWith("http") ? path : "" } };
+        return { data: { publicUrl: mediaSrc(path) } };
       },
       async createSignedUrl(path: string, _expires?: number) {
-        return { data: { signedUrl: path?.startsWith("http") ? path : "" }, error: null };
+        return { data: { signedUrl: mediaSrc(path) }, error: null };
       },
     };
   },

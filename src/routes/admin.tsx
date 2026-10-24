@@ -1,18 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-
+import { useCallback, useEffect, useState } from "react";
+import { Delete, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase, type Session } from "@/integrations/supabase/client";
 import { Header } from "@/components/site/Header";
-import { useLang, useSettings } from "@/lib/app-context";
-import { t } from "@/lib/i18n";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { BrandLogo } from "@/components/site/BrandLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { MediaImage } from "@/components/site/MediaImage";
-import { KeyRound, Loader2, LogIn } from "lucide-react";
-
+import { useLang } from "@/lib/app-context";
+import { t } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -20,21 +16,13 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   const { lang } = useLang();
-  const { settings } = useSettings();
-
-
-  const [session, setSession] = useState<import("@/integrations/supabase/client").Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      setIsAdmin(!!s?.user);
-    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      setIsAdmin(!!data.session?.user);
       setChecking(false);
     });
     return () => sub.subscription.unsubscribe();
@@ -42,103 +30,128 @@ function AdminPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div>
+      <div className="min-h-dvh bg-background">
+        <Header title={t(lang, "admin_dashboard")} />
+        <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       </div>
     );
   }
 
-  if (!session || !isAdmin) {
+  if (!session) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <LoginCard />
+      <div className="min-h-dvh bg-background">
+        <Header title={t(lang, "admin_dashboard")} />
+        <PinPad />
       </div>
     );
   }
 
-  const adminName = session?.user?.user_metadata.display_name ?? "";
-  const isSuper = !!session?.user?.user_metadata.is_super;
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="mx-auto max-w-6xl px-4 pt-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-sm gold-text font-semibold">
-          {t(lang, "welcome_back")}، {adminName} · {isSuper ? (lang === "ar" ? "المشرف العام" : "General supervisor") : (lang === "ar" ? "مشرف" : "Supervisor")}
-        </div>
-      </div>
-      <AdminDashboard isSuper={isSuper} />
+    <div className="min-h-dvh bg-background">
+      <Header title={t(lang, "admin_dashboard")} />
+      <AdminDashboard session={session} />
     </div>
   );
+}
 
+const MIN = 6;
+const MAX = 12;
 
-  function LoginCard() {
-    const [pin, setPin] = useState("");
-    const [loading, setLoading] = useState(false);
+/** iPhone-style passcode entry: dots + keypad, also works with a physical keyboard. */
+function PinPad() {
+  const { lang } = useLang();
+  const ar = lang === "ar";
+  const [pin, setPin] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [shake, setShake] = useState(false);
 
-    const doLogin = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!/^\d{6,12}$/.test(pin)) {
-        return toast.error(lang === "ar" ? "الرقم السري من 6 إلى 12 رقماً" : "PIN must be 6–12 digits");
-      }
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithPin(pin);
-      setLoading(false);
-      if (error) {
-        setPin("");
-        if (error.message === "locked") {
-          return toast.error(lang === "ar" ? "محاولات كثيرة خاطئة. حاول بعد 15 دقيقة." : "Too many wrong attempts. Try again in 15 minutes.");
-        }
-        return toast.error(lang === "ar" ? "الرقم السري غير صحيح" : "Incorrect PIN");
-      }
+  const submit = useCallback(async (value: string) => {
+    if (value.length < MIN || busy) return;
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithPin(value);
+    setBusy(false);
+    if (error) {
+      setPin("");
+      setShake(true);
+      setTimeout(() => setShake(false), 450);
+      toast.error(
+        error.message === "locked"
+          ? ar ? "محاولات خاطئة كثيرة. حاول بعد 15 دقيقة." : "Too many wrong attempts. Try again in 15 minutes."
+          : ar ? "الرقم السري غير صحيح" : "Incorrect PIN",
+      );
+    }
+  }, [busy, ar]);
+
+  const press = (d: string) => setPin((p) => (p.length >= MAX ? p : p + d));
+  const back = () => setPin((p) => p.slice(0, -1));
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (/^\d$/.test(e.key)) press(e.key);
+      else if (e.key === "Backspace") back();
+      else if (e.key === "Enter") submit(pin);
     };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pin, submit]);
 
-    return (
-      <div className="mx-auto max-w-sm px-4 py-16">
-        <div className="card-elegant p-8">
-          <div className="mb-5 flex flex-col items-center gap-3">
-            {settings.logo_url && (
-              <MediaImage
-                path={settings.logo_url}
-                alt={settings.site_name}
-                className="h-20 w-20 rounded-full object-cover ring-2 ring-gold/50 shadow-md"
-              />
+  const dots = Math.max(MIN, pin.length);
+
+  return (
+    <div className="mx-auto flex max-w-xs flex-col items-center px-6 pb-10 pt-8">
+      <BrandLogo className="h-20 w-auto" />
+      <h1 className="mt-5 text-lg font-bold">{ar ? "أدخل الرقم السري" : "Enter PIN"}</h1>
+      <p className="mt-1 text-center text-xs text-muted-foreground">{ar ? "للدخول إلى لوحة التحكم" : "to open the dashboard"}</p>
+
+      <div className={cn("mt-6 flex h-4 items-center gap-3.5", shake && "animate-[shake_.4s_ease]")} dir="ltr" aria-live="polite">
+        {Array.from({ length: dots }).map((_, i) => (
+          <span
+            key={i}
+            className={cn(
+              "h-3.5 w-3.5 rounded-full border-[1.5px] border-foreground transition-colors",
+              i < pin.length && "bg-foreground",
             )}
-            <h1 className="flex items-center gap-2 font-display text-2xl font-bold gold-text">
-              <LogIn className="h-5 w-5" /> {settings.site_name}
-            </h1>
-            <p className="text-center text-xs text-muted-foreground">
-              {lang === "ar" ? "أدخل الرقم السري للدخول إلى لوحة التحكم." : "Enter your PIN to open the dashboard."}
-            </p>
-          </div>
-
-          <form onSubmit={doLogin} className="space-y-4">
-            <div>
-              <Label htmlFor="pin" className="flex items-center gap-1.5">
-                <KeyRound className="h-3.5 w-3.5 text-gold" /> {lang === "ar" ? "الرقم السري" : "PIN"}
-              </Label>
-              <Input
-                id="pin"
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={12}
-                autoComplete="current-password"
-                autoFocus
-                dir="ltr"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                className="text-center text-2xl tracking-[0.5em] font-semibold"
-                required
-              />
-            </div>
-            <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t(lang, "admin_login")}
-            </Button>
-          </form>
-        </div>
+          />
+        ))}
       </div>
-    );
-  }
+
+      <div className="mt-9 grid grid-cols-3 gap-x-6 gap-y-4" dir="ltr">
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+          <Key key={d} onClick={() => press(d)}>{d}</Key>
+        ))}
+        <button
+          type="button"
+          onClick={back}
+          disabled={!pin}
+          aria-label={ar ? "حذف" : "Delete"}
+          className="tap grid h-[74px] w-[74px] place-items-center rounded-full text-foreground disabled:opacity-30"
+        >
+          <Delete className="h-6 w-6" />
+        </button>
+        <Key onClick={() => press("0")}>0</Key>
+        <button
+          type="button"
+          onClick={() => submit(pin)}
+          disabled={pin.length < MIN || busy}
+          aria-label={t(lang, "admin_login")}
+          className="tap grid h-[74px] w-[74px] place-items-center rounded-full text-[15px] font-bold text-ios-blue disabled:opacity-30"
+        >
+          {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : ar ? "دخول" : "OK"}
+        </button>
+      </div>
+      <style>{`@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}`}</style>
+    </div>
+  );
+}
+
+function Key({ children, onClick }: { children: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="grid h-[74px] w-[74px] place-items-center rounded-full bg-fill text-[30px] font-medium leading-none transition active:bg-foreground/25"
+    >
+      {children}
+    </button>
+  );
 }

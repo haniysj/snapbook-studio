@@ -33,28 +33,46 @@ const DEFAULT_SETTINGS: SiteSettings = {
 
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [lang, setLangState] = useState<Lang>("ar");
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+  const [hydrated, setHydrated] = useState(false);
 
-  // hydrate from localStorage
+  // Theme follows the phone's light/dark setting until the visitor picks one explicitly.
   useEffect(() => {
-    const t = (localStorage.getItem("theme") as Theme | null) ?? "light";
-    const l = (localStorage.getItem("lang") as Lang | null) ?? "ar";
-    setTheme(t);
-    setLangState(l);
+    let saved: string | null = null;
+    try { saved = localStorage.getItem("theme"); } catch { /* ignore */ }
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    setThemeState((saved as Theme | null) ?? (mq.matches ? "dark" : "light"));
+    let l: string | null = null;
+    try { l = localStorage.getItem("lang"); } catch { /* ignore */ }
+    setLangState(l === "en" ? "en" : "ar");
+    setHydrated(true);
+    const onChange = (e: MediaQueryListEvent) => {
+      let explicit: string | null = null;
+      try { explicit = localStorage.getItem("theme"); } catch { /* ignore */ }
+      if (!explicit) setThemeState(e.matches ? "dark" : "light");
+    };
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+  }, [theme, hydrated]);
 
   useEffect(() => {
+    if (!hydrated) return;
     document.documentElement.setAttribute("lang", lang);
     document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
-    localStorage.setItem("lang", lang);
-  }, [lang]);
+    try { localStorage.setItem("lang", lang); } catch { /* ignore */ }
+  }, [lang, hydrated]);
+
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t);
+    try { localStorage.setItem("theme", t); } catch { /* ignore */ }
+  }, []);
 
   const refresh = useCallback(async () => {
     const { data } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
@@ -80,6 +98,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (settings.site_name) document.title = settings.site_name;
     let cancelled = false;
     (async () => {
+      // Default brand icons ship in /public; only swap them when a custom logo was uploaded.
       const href = settings.logo_url ? await signedMediaUrl(settings.logo_url) : "";
       if (cancelled || !href) return;
       const head = document.head;
@@ -97,8 +116,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [settings.logo_url, settings.site_name]);
 
   const themeCtx = useMemo<ThemeCtx>(
-    () => ({ theme, toggle: () => setTheme((p) => (p === "light" ? "dark" : "light")), set: setTheme }),
-    [theme],
+    () => ({ theme, toggle: () => setTheme(theme === "light" ? "dark" : "light"), set: setTheme }),
+    [theme, setTheme],
   );
   const langCtx = useMemo<LangCtx>(
     () => ({ lang, setLang: setLangState, toggle: () => setLangState((p) => (p === "ar" ? "en" : "ar")) }),

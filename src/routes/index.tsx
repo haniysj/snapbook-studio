@@ -1,15 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Header } from "@/components/site/Header";
+import { SiteShell } from "@/components/site/SiteChrome";
 import { GalleryCarousel } from "@/components/site/GalleryCarousel";
 import { PackagesGrid } from "@/components/site/PackagesGrid";
 import { BookingCalendar } from "@/components/site/BookingCalendar";
 import { ContactSection } from "@/components/site/ContactSection";
-import { MediaImage } from "@/components/site/MediaImage";
+import { BrandLogo } from "@/components/site/BrandLogo";
 import { useLang, useSettings } from "@/lib/app-context";
-import { useSession } from "@/lib/helpers";
 import { t } from "@/lib/i18n";
-import { Button } from "@/components/ui/button";
-import { Camera, Sparkles } from "lucide-react";
+import { CalendarPlus, ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -18,56 +16,40 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const { lang } = useLang();
   const { settings } = useSettings();
-  const session = useSession();
-  const username = session?.user?.user_metadata.display_name ?? "";
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
+    <SiteShell>
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--gold)_25%,transparent),transparent_60%)]" />
-        <div className="mx-auto max-w-6xl px-4 py-16 text-center md:py-24">
-          {username && (
-            <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-sm gold-text font-semibold">
-              {t(lang, "welcome_back")}, {username} 👋
-            </div>
-          )}
-
-          {settings.logo_url && (
-            <div className="mx-auto mb-6 flex justify-center">
-              <MediaImage
-                path={settings.logo_url}
-                alt={settings.site_name}
-                className="h-24 w-24 rounded-full object-cover ring-2 ring-gold/60 shadow-lg md:h-28 md:w-28"
-              />
-            </div>
-          )}
-
-          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/5 px-4 py-1.5 text-xs">
-            <Sparkles className="h-3.5 w-3.5 text-gold" />
-            <span className="text-muted-foreground">{lang === "ar" ? "استوديو تصوير احترافي" : "Professional photography studio"}</span>
+        <div className="mx-auto flex max-w-6xl flex-col items-center px-5 pb-10 pt-10 text-center md:pb-16 md:pt-16">
+          <div className="rise">
+            <BrandLogo className="mx-auto h-40 w-auto md:h-56" />
           </div>
-          <h1 className="font-display text-4xl font-bold leading-tight md:text-6xl">
-            <span className="gold-text">{settings.site_name}</span>
+          <h1 className="rise large-title mt-6 md:text-5xl" style={{ animationDelay: "80ms" }}>
+            {settings.site_name}
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground md:text-lg">
+          <p className="rise mt-2 max-w-md text-[15px] text-muted-foreground md:text-lg" style={{ animationDelay: "140ms" }}>
             {t(lang, "brand_tagline")}
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/book">
-              <Button size="lg" className="gap-2 bg-gradient-to-r from-gold to-gold-soft text-primary-foreground hover:opacity-90">
-                <Camera className="h-4 w-4" />
-                {t(lang, "book_now")}
-              </Button>
+          <div className="rise mt-7 flex w-full max-w-sm flex-col gap-2.5 sm:w-auto sm:max-w-none sm:flex-row" style={{ animationDelay: "200ms" }}>
+            <Link
+              to="/book"
+              className="tap inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 text-[15px] font-bold text-primary-foreground"
+            >
+              <CalendarPlus className="h-[18px] w-[18px]" />
+              {t(lang, "book_now")}
             </Link>
-            <a href="#packages">
-              <Button size="lg" variant="outline" className="border-gold/50">
-                {t(lang, "nav_packages")}
-              </Button>
-            </a>
+            <Link
+              to="/"
+              hash="packages"
+              className="tap inline-flex h-12 items-center justify-center rounded-full bg-fill px-7 text-[15px] font-bold"
+            >
+              {lang === "ar" ? "اطّلع على الباقات" : "See packages"}
+            </Link>
           </div>
+          <Link to="/" hash="gallery" className="mt-8 text-muted-foreground" aria-label={t(lang, "nav_gallery")}>
+            <ChevronDown className="h-6 w-6 animate-bounce" />
+          </Link>
         </div>
       </section>
 
@@ -75,10 +57,6 @@ function HomePage() {
       <BookingCalendar />
       <PackagesGrid />
       <ContactSection />
-
-      <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} {settings.site_name}
-      </footer>
-    </div>
+    </SiteShell>
   );
 }

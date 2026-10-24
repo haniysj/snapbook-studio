@@ -1,23 +1,18 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
-import { useMemo, useState } from "react";
-import { DayPicker } from "react-day-picker";
+import { useState, type ReactNode } from "react";
 import { ar as arLocale, enUS } from "date-fns/locale";
 import { format } from "date-fns";
+import { CalendarDays, Check, Clock, Loader2, MapPin, Phone, StickyNote, UserRound } from "lucide-react";
+import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/site/Header";
-import { useLang, useSettings } from "@/lib/app-context";
-import { whatsappUrl } from "@/lib/helpers";
+import { SiteShell } from "@/components/site/SiteChrome";
+import { StudioCalendar, toDate, toKey, useBookedDates } from "@/components/site/BookingCalendar";
+import { formatPrice, offerActive, usePackages } from "@/components/site/PackagesGrid";
+import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { CalendarDays } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
   date: z.string().optional(),
@@ -29,182 +24,221 @@ export const Route = createFileRoute("/book")({
   component: BookPage,
 });
 
-function toDate(s: string): Date {
-  const [y, m, d] = s.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-function toKey(d: Date): string {
-  return format(d, "yyyy-MM-dd");
-}
+export type BookingSummary = {
+  id: string; name: string; phone: string; date: string; time: string; pkg: string; location: string; notes: string;
+};
 
 function BookPage() {
   const { lang } = useLang();
-  const { settings } = useSettings();
+  const ar = lang === "ar";
   const navigate = useNavigate();
   const { date: initialDate, package_id: initialPkg } = Route.useSearch();
+  const bookedDates = useBookedDates();
+  const { data: packages = [] } = usePackages();
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate ? toDate(initialDate) : undefined);
+  const [date, setDate] = useState<Date | undefined>(initialDate ? toDate(initialDate) : undefined);
+  const [pickingDate, setPickingDate] = useState(!initialDate);
+  const [time, setTime] = useState("18:00");
+  const [pkg, setPkg] = useState<string>(initialPkg ?? "");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
-  const [time, setTime] = useState("18:00");
-  const [pkg, setPkg] = useState<string>(initialPkg ?? "");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: packages = [] } = useQuery({
-    queryKey: ["packages"],
-    queryFn: async () => (await supabase.from("packages").select("*").eq("active", true).order("sort_order")).data ?? [],
-  });
-
-  const { data: bookedRows = [] } = useQuery({
-    queryKey: ["booked_dates_rpc"],
-    queryFn: async () => {
-      const { data } = await supabase.rpc("get_booked_dates");
-      return (data ?? []) as Array<{ event_date: string | null }>;
-    },
-  });
-  const bookedDates = useMemo(
-    () =>
-      bookedRows
-        .filter((b): b is { event_date: string } => !!b.event_date)
-        .map((b) => toDate(b.event_date)),
-    [bookedRows],
-  );
-
+  const dateIsBooked = !!date && bookedDates.some((d) => toKey(d) === toKey(date));
+  const locale = ar ? arLocale : enUS;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDate) return toast.error(t(lang, "choose_date_first"));
-    if (!name || name.length < 2) return toast.error(lang === "ar" ? "الرجاء إدخال الاسم" : "Please enter your name");
-    if (!phone || phone.length < 5) return toast.error(lang === "ar" ? "الرجاء إدخال رقم صحيح" : "Please enter a valid phone");
+    if (!date || dateIsBooked) { setPickingDate(true); return toast.error(t(lang, "choose_date_first")); }
     if (!pkg) return toast.error(t(lang, "select_package"));
+    if (name.trim().length < 2) return toast.error(ar ? "اكتب الاسم" : "Enter your name");
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 8) return toast.error(ar ? "اكتب رقم هاتف صحيح" : "Enter a valid phone number");
 
     setSubmitting(true);
-    const bookingId = crypto.randomUUID();
-    const { error } = await supabase
-      .from("bookings")
-      .insert({
-        id: bookingId,
-        customer_name: name.trim(),
-        phone: phone.trim(),
-        event_location_url: location.trim(),
-        event_date: toKey(selectedDate),
-        event_time: time,
-        package_id: pkg,
-        notes: notes.trim(),
-        status: "pending",
-      });
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("bookings").insert({
+      id,
+      customer_name: name.trim(),
+      phone: phone.trim(),
+      event_location_url: location.trim(),
+      event_date: toKey(date),
+      event_time: time,
+      package_id: pkg,
+      notes: notes.trim(),
+      status: "pending",
+    });
     setSubmitting(false);
+    if (error) return toast.error(ar ? "تعذّر إرسال الطلب، حاول مرة أخرى" : "Couldn't send the request, please try again");
 
-    if (error) {
-      toast.error(error?.message ?? "Error");
-      return;
-    }
-
-    // Auto-open WhatsApp: notify platform with booking details from customer
-    const selectedPkg = packages.find((p: any) => p.id === pkg);
-    const pkgLabel = selectedPkg ? (lang === "ar" ? selectedPkg.name_ar : (selectedPkg.name_en || selectedPkg.name_ar)) : "";
-    const bookingRef = `#${bookingId.slice(0, 8).toUpperCase()}`;
-    const notifyMsg = lang === "ar"
-      ? `طلب حجز جديد ${bookingRef}\n\nالاسم: ${name.trim()}\nالهاتف: ${phone.trim()}\nالتاريخ: ${toKey(selectedDate)}\nالوقت: ${time}\nالباقة: ${pkgLabel}${location ? `\nالموقع: ${location.trim()}` : ""}${notes ? `\nملاحظات: ${notes.trim()}` : ""}`
-      : `New booking request ${bookingRef}\n\nName: ${name.trim()}\nPhone: ${phone.trim()}\nDate: ${toKey(selectedDate)}\nTime: ${time}\nPackage: ${pkgLabel}${location ? `\nLocation: ${location.trim()}` : ""}${notes ? `\nNotes: ${notes.trim()}` : ""}`;
-    try {
-      window.open(whatsappUrl(settings.whatsapp_number, notifyMsg), "_blank", "noopener,noreferrer");
-    } catch { /* ignore */ }
-
-    navigate({ to: "/booking-confirmed/$id", params: { id: bookingId } });
+    const chosen = packages.find((p) => p.id === pkg);
+    const summary: BookingSummary = {
+      id, name: name.trim(), phone: phone.trim(), date: toKey(date), time, location: location.trim(), notes: notes.trim(),
+      pkg: chosen ? (ar ? chosen.name_ar : chosen.name_en || chosen.name_ar) : "",
+    };
+    try { sessionStorage.setItem(`booking:${id}`, JSON.stringify(summary)); } catch { /* ignore */ }
+    navigate({ to: "/booking-confirmed/$id", params: { id } });
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="mb-1 font-display text-3xl font-bold gold-text">{t(lang, "book_now")}</h1>
-        <p className="mb-8 text-sm text-muted-foreground">
-          {lang === "ar" ? "أكمل بيانات المناسبة لإتمام الحجز." : "Complete your event details to book."}
+    <SiteShell title={t(lang, "book_now")}>
+      <form onSubmit={onSubmit} className="mx-auto max-w-xl space-y-6 px-4 pb-10 pt-6">
+        <div className="px-1">
+          <h1 className="large-title">{t(lang, "book_now")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{ar ? "ثلاث خطوات بسيطة ونتواصل معك." : "Three quick steps and we'll be in touch."}</p>
+        </div>
+
+        {/* 1. Date & time */}
+        <Group label={ar ? "١. الموعد" : "1. Date & time"}>
+          {pickingDate || !date ? (
+            <div className="px-2 pb-3 pt-3">
+              <StudioCalendar
+                selected={date}
+                onSelect={(d) => { setDate(d); if (d) setPickingDate(false); }}
+                bookedDates={bookedDates}
+              />
+            </div>
+          ) : (
+            <button type="button" onClick={() => setPickingDate(true)} className="ios-row tap w-full text-start">
+              <Icon tint="bg-ios-red"><CalendarDays className="h-[17px] w-[17px]" /></Icon>
+              <span className="flex-1 font-semibold">{format(date, "EEEE d MMMM yyyy", { locale })}</span>
+              <span className="text-sm font-semibold text-ios-blue">{ar ? "تغيير" : "Change"}</span>
+            </button>
+          )}
+          <label className="ios-row">
+            <Icon tint="bg-ios-orange"><Clock className="h-[17px] w-[17px]" /></Icon>
+            <span className="flex-1 font-semibold">{t(lang, "form_time")}</span>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+              dir="ltr"
+              className="rounded-lg bg-fill px-2.5 py-1 text-[15px] font-semibold outline-none"
+            />
+          </label>
+        </Group>
+        {dateIsBooked && <p className="-mt-4 px-4 text-sm font-semibold text-ios-red">{t(lang, "date_taken")}</p>}
+
+        {/* 2. Package */}
+        <Group label={ar ? "٢. الباقة" : "2. Package"}>
+          {packages.length === 0 && <div className="ios-row text-sm text-muted-foreground">{t(lang, "loading")}</div>}
+          {packages.map((p) => {
+            const active = pkg === p.id;
+            const offer = offerActive(p);
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPkg(p.id)}
+                aria-pressed={active}
+                className="ios-row tap w-full text-start"
+              >
+                <span
+                  className={cn(
+                    "grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition",
+                    active ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
+                  )}
+                >
+                  {active && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{ar ? p.name_ar : p.name_en || p.name_ar}</span>
+                  {(ar ? p.description_ar : p.description_en || p.description_ar) && (
+                    <span className="block truncate text-xs text-muted-foreground">{ar ? p.description_ar : p.description_en || p.description_ar}</span>
+                  )}
+                </span>
+                <span className="shrink-0 text-end" dir="ltr">
+                  <span className="block whitespace-nowrap font-bold">{formatPrice(offer ? p.discounted_price : p.price)} <span className="text-xs font-semibold text-muted-foreground">{p.currency}</span></span>
+                  {offer && <span className="block text-xs text-muted-foreground line-through">{formatPrice(p.price)}</span>}
+                </span>
+              </button>
+            );
+          })}
+        </Group>
+
+        {/* 3. Details */}
+        <Group label={ar ? "٣. بياناتك" : "3. Your details"}>
+          <Field icon={<UserRound className="h-[17px] w-[17px]" />} tint="bg-ios-blue">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t(lang, "form_name")}
+              autoComplete="name"
+              required
+              className="w-full bg-transparent py-1 outline-none placeholder:text-muted-foreground"
+            />
+          </Field>
+          <Field icon={<Phone className="h-[17px] w-[17px]" />} tint="bg-ios-green">
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder={ar ? "رقم الهاتف (واتساب)" : "Phone (WhatsApp)"}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              dir="ltr"
+              required
+              className="w-full bg-transparent py-1 text-start outline-none placeholder:text-muted-foreground rtl:text-right"
+            />
+          </Field>
+          <Field icon={<MapPin className="h-[17px] w-[17px]" />} tint="bg-ios-red">
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder={ar ? "رابط موقع المناسبة (اختياري)" : "Event location link (optional)"}
+              inputMode="url"
+              dir="ltr"
+              className="w-full bg-transparent py-1 outline-none placeholder:text-muted-foreground rtl:text-right"
+            />
+          </Field>
+          <Field icon={<StickyNote className="h-[17px] w-[17px]" />} tint="bg-[#8E8E93]" top>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={t(lang, "form_notes")}
+              rows={2}
+              className="w-full resize-none bg-transparent py-1 outline-none placeholder:text-muted-foreground"
+            />
+          </Field>
+        </Group>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="tap flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-60"
+        >
+          {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+          {t(lang, "submit_booking")}
+        </button>
+        <p className="-mt-3 px-2 text-center text-xs text-muted-foreground">
+          {ar ? "الحجز مبدئي ويُثبَّت بعد تحويل العربون وتأكيد الاستوديو." : "Your date is held until the deposit is received and confirmed."}
         </p>
+      </form>
+    </SiteShell>
+  );
+}
 
-        <form onSubmit={onSubmit} className="card-elegant space-y-5 p-6">
-          {/* date section */}
-          <div>
-            <Label className="mb-2 flex items-center gap-2"><CalendarDays className="h-4 w-4" /> {t(lang, "form_date")}</Label>
-            {selectedDate ? (
-              <div className="flex items-center justify-between rounded-lg border border-gold/40 bg-gold/10 px-4 py-2 text-sm">
-                <span>{format(selectedDate, "PPP", { locale: lang === "ar" ? arLocale : enUS })}</span>
-                <button type="button" onClick={() => setSelectedDate(undefined)} className="text-xs text-muted-foreground underline">
-                  {lang === "ar" ? "تغيير" : "Change"}
-                </button>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-border p-3">
-                <DayPicker
-                  mode="single"
-                  weekStartsOn={0}
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={[{ before: new Date() }, ...bookedDates]}
-                  modifiers={{ booked: bookedDates, weekend: { dayOfWeek: [5, 6] } }}
-                  modifiersClassNames={{ booked: "rdp-day-booked", selected: "rdp-day-selected-gold", weekend: "rdp-day-weekend" }}
-                  locale={lang === "ar" ? arLocale : enUS}
-                  dir={lang === "ar" ? "rtl" : "ltr"}
-                />
-              </div>
-
-            )}
-          </div>
-
-          <Field label={t(lang, "form_name")}>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required />
-          </Field>
-          <Field label={t(lang, "form_phone")}>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} required dir="ltr" placeholder="+968..." />
-          </Field>
-          <Field label={t(lang, "form_location")}>
-            <Input value={location} onChange={(e) => setLocation(e.target.value)} dir="ltr" placeholder="https://maps.google.com/..." />
-          </Field>
-          <Field label={t(lang, "form_time")}>
-            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} required dir="ltr" />
-          </Field>
-          <Field label={t(lang, "form_package")}>
-            <Select value={pkg} onValueChange={setPkg}>
-              <SelectTrigger><SelectValue placeholder={t(lang, "select_package")} /></SelectTrigger>
-              <SelectContent>
-                {packages.map((p) => {
-                  const hasOffer =
-                    p.discounted_price != null &&
-                    (!p.offer_expiry_date || new Date(p.offer_expiry_date).getTime() > Date.now());
-                  return (
-                    <SelectItem key={p.id} value={p.id}>
-                      {(lang === "ar" ? p.name_ar : p.name_en || p.name_ar)} — {Number(p.price).toLocaleString()} {p.currency}
-                      {hasOffer ? ` (${lang === "ar" ? "بعد الخصم" : "after discount"}: ${Number(p.discounted_price).toLocaleString()} ${p.currency})` : ""}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label={t(lang, "form_notes")}>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
-          </Field>
-
-          <div className="flex justify-between gap-3">
-            <Link to="/"><Button type="button" variant="outline">{t(lang, "cancel")}</Button></Link>
-            <Button type="submit" disabled={submitting} className="bg-gradient-to-r from-gold to-gold-soft text-primary-foreground">
-              {submitting ? "..." : t(lang, "submit_booking")}
-            </Button>
-          </div>
-        </form>
-      </div>
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <div className="section-label">{label}</div>
+      <div className="ios-group ios-divide">{children}</div>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Icon({ tint, children }: { tint: string; children: ReactNode }) {
+  return <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] text-white ${tint}`}>{children}</span>;
+}
+
+function Field({ icon, tint, children, top }: { icon: ReactNode; tint: string; children: ReactNode; top?: boolean }) {
   return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
-    </div>
+    <label className={cn("ios-row", top && "items-start")}>
+      <Icon tint={tint}>{icon}</Icon>
+      <span className="min-w-0 flex-1">{children}</span>
+    </label>
   );
 }

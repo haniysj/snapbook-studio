@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, mediaSrc } from "@/integrations/supabase/client";
 import type { Session } from "@/integrations/supabase/client";
 
 export function whatsappUrl(number: string, message?: string): string {
-  const clean = (number || "").replace(/[^\d]/g, "");
+  let clean = (number || "").replace(/[^\d]/g, "").replace(/^00/, "");
+  // Local Omani mobile/landline numbers (8 digits) → add the 968 country code
+  if (/^[2479]\d{7}$/.test(clean)) clean = `968${clean}`;
   const base = `https://wa.me/${clean}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
@@ -17,23 +19,14 @@ export function emailToUsername(email: string | null | undefined): string {
   return email.split("@")[0];
 }
 
-/** Kept for legacy imports — returns the public URL (works only if bucket is public). */
+/** Browser-usable URL for a stored media file (private Blob files are served via /api/media). */
 export function publicMediaUrl(path: string | null | undefined): string {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  const { data } = supabase.storage.from("media").getPublicUrl(path);
-  return data.publicUrl;
+  return mediaSrc(path);
 }
 
-/** Async signed URL for private media bucket. */
-export async function signedMediaUrl(
-  path: string | null | undefined,
-  expiresIn = 60 * 60,
-): Promise<string> {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  const { data } = await supabase.storage.from("media").createSignedUrl(path, expiresIn);
-  return data?.signedUrl ?? "";
+/** Kept async for existing callers. */
+export async function signedMediaUrl(path: string | null | undefined): Promise<string> {
+  return mediaSrc(path);
 }
 
 /** Simple session hook. */
