@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Currency } from "@/components/site/Currency";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -120,7 +121,7 @@ export function PackagesTab() {
                     <span className="block truncate text-[13px] text-muted-foreground">{p.description_ar}</span>
                   </span>
                   <span className="shrink-0 whitespace-nowrap text-[15px] font-bold" dir="ltr">
-                    {formatPrice(offer ? p.discounted_price as number : p.price as number)} <span className="text-xs text-muted-foreground">{p.currency}</span>
+                    {formatPrice(offer ? p.discounted_price as number : p.price as number)} <Currency code={p.currency} className="text-xs text-muted-foreground" />
                   </span>
                   <Chevron className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                 </button>

@@ -17,7 +17,6 @@ export function SiteShell({ children, title }: { children: ReactNode; title?: st
       <main className="mb-tabbar md:mb-0">{children}</main>
       <footer className="mb-tabbar px-4 pb-8 pt-4 text-center text-xs text-muted-foreground md:mb-0">
         <div>© {new Date().getFullYear()} {settings.site_name}</div>
-        <div className="mt-1 opacity-70" dir="ltr">Prepared by: Hani Al Ghatrifi</div>
       </footer>
       <TabBar />
       <WhatsAppFab />

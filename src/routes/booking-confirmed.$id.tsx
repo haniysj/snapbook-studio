@@ -29,11 +29,11 @@ function BookingConfirmed() {
 
   const msg = summary
     ? ar
-      ? `طلب حجز جديد ${ref}\n\nالاسم: ${summary.name}\nالهاتف: ${summary.phone}\nالتاريخ: ${summary.date}\nالوقت: ${summary.time}\nالباقة: ${summary.pkg}${summary.location ? `\nالموقع: ${summary.location}` : ""}${summary.notes ? `\nملاحظات: ${summary.notes}` : ""}\n\nمرفق إيصال العربون.`
-      : `New booking request ${ref}\n\nName: ${summary.name}\nPhone: ${summary.phone}\nDate: ${summary.date}\nTime: ${summary.time}\nPackage: ${summary.pkg}${summary.location ? `\nLocation: ${summary.location}` : ""}${summary.notes ? `\nNotes: ${summary.notes}` : ""}\n\nDeposit receipt attached.`
+      ? `طلب حجز جديد ${ref}\n\nالاسم: ${summary.name}\nالهاتف: ${summary.phone}\nالتاريخ: ${summary.date}\nالوقت: ${summary.time}\nالباقة: ${summary.pkg}${summary.location ? `\nالموقع: ${summary.location}` : ""}${summary.notes ? `\nملاحظات: ${summary.notes}` : ""}\n\nمرفق إيصال الدفعة المقدمة.`
+      : `New booking request ${ref}\n\nName: ${summary.name}\nPhone: ${summary.phone}\nDate: ${summary.date}\nTime: ${summary.time}\nPackage: ${summary.pkg}${summary.location ? `\nLocation: ${summary.location}` : ""}${summary.notes ? `\nNotes: ${summary.notes}` : ""}\n\nAdvance payment receipt attached.`
     : ar
-      ? `مرحباً، أرسلت طلب حجز برقم ${ref}. مرفق إيصال العربون.`
-      : `Hi, I sent booking request ${ref}. Deposit receipt attached.`;
+      ? `مرحباً، أرسلت طلب حجز برقم ${ref}. مرفق إيصال الدفعة المقدمة.`
+      : `Hi, I sent booking request ${ref}. Advance payment receipt attached.`;
 
   const copy = async (text: string, label: string) => {
     try { await navigator.clipboard.writeText(text); toast.success(ar ? `تم نسخ ${label}` : `${label} copied`); }
@@ -62,7 +62,7 @@ function BookingConfirmed() {
 
         <div className="mt-8 space-y-6">
           <div>
-            <div className="section-label">{ar ? "١. حوّل العربون" : "1. Transfer the deposit"}</div>
+            <p className="mb-2 px-1 text-[15px] font-semibold leading-7">{ar ? "١. يرجى التكرم بتحويل دفعة مقدمة إلى الرقم التالي المرتبط بالحساب (لتأكيد الحجز)." : "1. Kindly transfer an advance payment to the following number linked to the account (to confirm the booking)."}</p>
             <div className="ios-group">
               <pre className="whitespace-pre-wrap px-4 py-3.5 font-sans text-[15px] leading-7">{settings.bank_details || "—"}</pre>
               {settings.bank_details && (

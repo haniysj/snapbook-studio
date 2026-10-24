@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Currency } from "@/components/site/Currency";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Clock, MapPin, MessageSquareText, Phone, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -150,7 +151,7 @@ export function BookingsTab() {
                     {p && (
                       <div className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-fill px-2.5 py-0.5 text-[12px] font-semibold">
                         <span className="truncate">{ar ? p.name_ar : p.name_en || p.name_ar}</span>
-                        <span className="whitespace-nowrap text-muted-foreground" dir="ltr">{formatPrice(p.price)} {p.currency}</span>
+                        <span className="whitespace-nowrap text-muted-foreground" dir="ltr">{formatPrice(p.price)} <Currency code={p.currency} /></span>
                       </div>
                     )}
                     {b.event_location_url && (

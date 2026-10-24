@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Currency } from "@/components/site/Currency";
 import { z } from "zod";
 import { useState, type ReactNode } from "react";
 import { ar as arLocale, enUS } from "date-fns/locale";
@@ -151,7 +152,7 @@ function BookPage() {
                   )}
                 </span>
                 <span className="shrink-0 text-end" dir="ltr">
-                  <span className="block whitespace-nowrap font-bold">{formatPrice(offer ? p.discounted_price : p.price)} <span className="text-xs font-semibold text-muted-foreground">{p.currency}</span></span>
+                  <span className="block whitespace-nowrap font-bold">{formatPrice(offer ? p.discounted_price : p.price)} <Currency code={p.currency} className="text-xs font-semibold text-muted-foreground" /></span>
                   {offer && <span className="block text-xs text-muted-foreground line-through">{formatPrice(p.price)}</span>}
                 </span>
               </button>
@@ -214,7 +215,7 @@ function BookPage() {
           {t(lang, "submit_booking")}
         </button>
         <p className="-mt-3 px-2 text-center text-xs text-muted-foreground">
-          {ar ? "الحجز مبدئي ويُثبَّت بعد تحويل العربون وتأكيد الاستوديو." : "Your date is held until the deposit is received and confirmed."}
+          {ar ? "الحجز مبدئي ويُثبَّت بعد تحويل الدفعة المقدمة وتأكيد الاستوديو." : "Your date is held until the advance payment is received and confirmed."}
         </p>
       </form>
     </SiteShell>

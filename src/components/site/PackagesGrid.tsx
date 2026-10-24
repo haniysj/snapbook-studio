@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Currency } from "@/components/site/Currency";
 import { Link } from "@tanstack/react-router";
 import { Check, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +84,7 @@ export function PackagesGrid() {
 
                 <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
                   <span className="text-4xl font-extrabold tracking-tight">{formatPrice(offer ? p.discounted_price : p.price)}</span>
-                  <span className={cn("text-sm font-semibold", featured ? "opacity-70" : "text-muted-foreground")}>{p.currency}</span>
+                  <Currency code={p.currency} className={cn("text-sm font-semibold", featured ? "opacity-70" : "text-muted-foreground")} />
                   {offer && <span className={cn("text-base line-through", featured ? "opacity-60" : "text-muted-foreground")}>{formatPrice(p.price)}</span>}
                 </div>
                 {offer && p.offer_expiry_date && (
