@@ -113,8 +113,8 @@ const storage = {
     return {
       async upload(path: string, file: File, opts?: { contentType?: string; upsert?: boolean }) {
         try {
-          const { upload } = await import("@vercel/blob/client");
-          const blob = await upload(path, file, {
+          const { uploadPresigned } = await import("@vercel/blob/client");
+          const blob = await uploadPresigned(path, file, {
             access: "public",
             handleUploadUrl: "/api/upload",
             contentType: opts?.contentType || file.type || undefined,
