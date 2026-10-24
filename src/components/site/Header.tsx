@@ -24,7 +24,7 @@ export function Header({ title }: { title?: string }) {
     <header className="glass hairline-b sticky top-0 z-40 w-full pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
         <Link to="/" className="tap flex min-w-0 items-center gap-2.5" aria-label={settings.site_name}>
-          <BrandLogo className="h-9 w-auto shrink-0" />
+          <BrandLogo className="h-9 w-auto shrink-0" shineDelay="1.8s" />
           <span className="truncate text-[15px] font-bold tracking-tight">{title ?? settings.site_name}</span>
         </Link>
 

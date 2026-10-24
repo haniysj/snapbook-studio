@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppProviders } from "../lib/app-context";
 import { Toaster } from "@/components/ui/sonner";
+import { Ambient } from "@/components/site/Ambient";
 
 function NotFoundComponent() {
   return (
@@ -57,8 +58,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#F2F2F7", media: "(prefers-color-scheme: light)" },
-      { name: "theme-color", content: "#000000", media: "(prefers-color-scheme: dark)" },
+      { name: "theme-color", content: "#F8F7F2", media: "(prefers-color-scheme: light)" },
+      { name: "theme-color", content: "#0D110E", media: "(prefers-color-scheme: dark)" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
@@ -72,13 +73,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" },
+      // ?v= busts browsers' long-lived icon caches when the logo changes
+      { rel: "icon", href: "/favicon.ico?v=3", sizes: "any" },
+      { rel: "icon", href: "/icons/favicon-32.png?v=3", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/icons/favicon-192.png?v=3", type: "image/png", sizes: "192x192" },
+      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png?v=3", sizes: "180x180" },
+      { rel: "manifest", href: "/manifest.webmanifest?v=3" },
     ],
   }),
   shellComponent: RootShell,
@@ -96,7 +96,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var t=localStorage.getItem('theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');var st=localStorage.getItem('site-theme');if(st&&st!=='classic')document.documentElement.dataset.theme=st;var l=localStorage.getItem('lang');if(l==='en'){document.documentElement.lang='en';document.documentElement.dir='ltr'}}catch(e){}",
+              "try{var t=localStorage.getItem('theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');var st=localStorage.getItem('site-theme')||'sage';if(st!=='classic')document.documentElement.dataset.theme=st;var l=localStorage.getItem('lang');if(l==='en'){document.documentElement.lang='en';document.documentElement.dir='ltr'}}catch(e){}",
           }}
         />
       </head>
@@ -113,6 +113,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppProviders>
+        <Ambient />
         <Outlet />
         <Toaster position="top-center" />
       </AppProviders>

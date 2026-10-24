@@ -30,7 +30,7 @@ function AdminPage() {
 
   if (checking) {
     return (
-      <div className="min-h-dvh bg-background">
+      <div className="min-h-dvh">
         <Header title={t(lang, "admin_dashboard")} />
         <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       </div>
@@ -39,7 +39,7 @@ function AdminPage() {
 
   if (!session) {
     return (
-      <div className="min-h-dvh bg-background">
+      <div className="min-h-dvh">
         <Header title={t(lang, "admin_dashboard")} />
         <PinPad />
       </div>
@@ -47,7 +47,7 @@ function AdminPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh">
       <Header title={t(lang, "admin_dashboard")} />
       <AdminDashboard session={session} />
     </div>

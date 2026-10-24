@@ -1,6 +1,13 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+/* Self-hosted fonts: IBM Plex Sans Arabic (text) + Readex Pro (headings) */
+@import "@fontsource/ibm-plex-sans-arabic/300.css";
+@import "@fontsource/ibm-plex-sans-arabic/400.css";
+@import "@fontsource/ibm-plex-sans-arabic/500.css";
+@import "@fontsource/ibm-plex-sans-arabic/600.css";
+@import "@fontsource/ibm-plex-sans-arabic/700.css";
+@import "@fontsource-variable/readex-pro/wght.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -56,8 +63,8 @@
   --color-sidebar-border: var(--border);
   --color-sidebar-ring: var(--ring);
 
-  --font-sans: "Cairo", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-  --font-display: "Cairo", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Arabic", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-display: "Readex Pro Variable", "IBM Plex Sans Arabic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 :root {
@@ -144,7 +151,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
+  h1, h2, h3, h4, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; font-weight: 600; }
+  h1 { font-weight: 700; }
   input, textarea, select, button { font-family: inherit; }
   /* iOS zooms into inputs smaller than 16px — keep form text at 16px on phones */
   @media (max-width: 767px) {
@@ -243,7 +251,17 @@
   color: var(--color-primary-foreground) !important;
   font-weight: 700;
 }
-.rdp-day-weekend:not(.rdp-disabled):not(.rdp-selected) .rdp-day_button { color: var(--color-ios-blue); font-weight: 600; }
+/* Weekend (Friday & Saturday): light tinted background on the day and its column header */
+.rdp-root .rdp-day-weekend:not(.rdp-day-booked):not(.rdp-selected) .rdp-day_button {
+  background-color: color-mix(in srgb, var(--brand) 13%, transparent);
+  font-weight: 600;
+}
+.rdp-root .rdp-weekday:nth-child(6),
+.rdp-root .rdp-weekday:nth-child(7) {
+  background-color: color-mix(in srgb, var(--brand) 13%, transparent);
+  color: var(--color-foreground);
+  border-radius: 999px;
+}
 
 /* ---------- motion ---------- */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -267,6 +285,8 @@
   --brand: #1c1c1e;
   --brand-2: #48484a;
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.1' fill='%23000' fill-opacity='.07'/%3E%3C/svg%3E");
+  --tile-x: 22px;
+  --tile-y: 22px;
 }
 html.dark {
   --primary: #ffffff;
@@ -287,6 +307,8 @@ html[data-theme="sand"] {
   --brand: #b8862b;
   --brand-2: #e3b964;
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%239a6b1f' stroke-opacity='.11' stroke-width='1'%3E%3Crect x='18' y='18' width='20' height='20'/%3E%3Crect x='18' y='18' width='20' height='20' transform='rotate%2845 28 28%29'/%3E%3Ccircle cx='0' cy='0' r='3'/%3E%3Ccircle cx='56' cy='0' r='3'/%3E%3Ccircle cx='0' cy='56' r='3'/%3E%3Ccircle cx='56' cy='56' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  --tile-x: 56px;
+  --tile-y: 56px;
 }
 html.dark[data-theme="sand"] {
   --primary: #d9a94e;
@@ -307,6 +329,8 @@ html[data-theme="ocean"] {
   --brand: #0e7c86;
   --brand-2: #38b6c0;
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath d='M0 12 Q 12 2 24 12 T 48 12' fill='none' stroke='%230b6e78' stroke-opacity='.12' stroke-width='1.2'/%3E%3C/svg%3E");
+  --tile-x: 48px;
+  --tile-y: 24px;
 }
 html.dark[data-theme="ocean"] {
   --primary: #3cc3cc;
@@ -327,6 +351,8 @@ html[data-theme="rose"] {
   --brand: #b5476b;
   --brand-2: #e58aa6;
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18'%3E%3Cpath d='M-2 20 L20 -2' stroke='%23a63d61' stroke-opacity='.09' stroke-width='1'/%3E%3C/svg%3E");
+  --tile-x: 18px;
+  --tile-y: 18px;
 }
 html.dark[data-theme="rose"] {
   --primary: #ec8fac;
@@ -347,6 +373,8 @@ html[data-theme="olive"] {
   --brand: #5b7a3a;
   --brand-2: #9bbf6a;
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg fill='none' stroke='%234e6b30' stroke-opacity='.11'%3E%3Ccircle cx='22' cy='22' r='7'/%3E%3Ccircle cx='22' cy='22' r='2.5'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='44' cy='44' r='4'/%3E%3Ccircle cx='44' cy='0' r='4'/%3E%3Ccircle cx='0' cy='44' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  --tile-x: 44px;
+  --tile-y: 44px;
 }
 html.dark[data-theme="olive"] {
   --primary: #a8cc78;
@@ -367,6 +395,8 @@ html[data-theme="night"] {
   --brand: #4f46e5;
   --brand-2: #8b85ff;
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='%234f46e5' fill-opacity='.16'%3E%3Ccircle cx='8' cy='10' r='1.2'/%3E%3Ccircle cx='40' cy='6' r='.8'/%3E%3Ccircle cx='26' cy='30' r='1.5'/%3E%3Ccircle cx='54' cy='38' r='1'/%3E%3Ccircle cx='12' cy='50' r='.8'/%3E%3Ccircle cx='44' cy='58' r='1.3'/%3E%3Cpath d='M50 18 l1 2.5 2.5 1 -2.5 1 -1 2.5 -1 -2.5 -2.5 -1 2.5 -1z'/%3E%3C/g%3E%3C/svg%3E");
+  --tile-x: 64px;
+  --tile-y: 64px;
 }
 html.dark[data-theme="night"] {
   --primary: #9b95ff;
@@ -380,17 +410,143 @@ html.dark[data-theme="night"] {
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='%23c9c6ff' fill-opacity='.22'%3E%3Ccircle cx='8' cy='10' r='1.2'/%3E%3Ccircle cx='40' cy='6' r='.8'/%3E%3Ccircle cx='26' cy='30' r='1.5'/%3E%3Ccircle cx='54' cy='38' r='1'/%3E%3Ccircle cx='12' cy='50' r='.8'/%3E%3Ccircle cx='44' cy='58' r='1.3'/%3E%3Cpath d='M50 18 l1 2.5 2.5 1 -2.5 1 -1 2.5 -1 -2.5 -2.5 -1 2.5 -1z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-@layer base {
-  body {
-    background-image:
-      radial-gradient(1100px 520px at 50% -140px, color-mix(in srgb, var(--brand) 18%, transparent), transparent 72%),
-      var(--pattern);
-    background-repeat: no-repeat, repeat;
-  }
-}
 @utility brand-gradient { background-image: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%); }
 @utility brand-text {
   background-image: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
+
+
+/* ---------- Sage Garden (default theme, palette from 21st.dev "Sage Garden" by Serafim) ---------- */
+html[data-theme="sage"] {
+  --primary: #7a9483;
+  --primary-foreground: #ffffff;
+  --ring: #7a9483;
+  --background: #f8f7f2;
+  --foreground: #1b2333;
+  --card: #ffffff;
+  --card-foreground: #1b2333;
+  --popover: #ffffff;
+  --popover-foreground: #1b2333;
+  --secondary: #d3d8c4;
+  --secondary-foreground: #1b2333;
+  --accent: #c2ccbe;
+  --accent-foreground: #1b2333;
+  --muted: #e8e7e1;
+  --muted-foreground: #5f6b7a;
+  --border: #e6e5df;
+  --input: #dcdbd3;
+  --fill: rgba(122, 148, 131, 0.14);
+  --destructive: #c83e3a;
+  --ios-red: #c83e3a;
+  --glass: rgba(248, 247, 242, 0.8);
+  --brand: #7a9483;
+  --brand-2: #b9c7a8;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%237a9483' stroke-opacity='.11' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M10 30 C 10 20, 20 14, 26 12 C 24 20, 18 28, 10 30 Z'/%3E%3Cpath d='M10 30 L 22 17'/%3E%3Cpath d='M34 44 C 34 38, 40 34, 44 33 C 43 38, 39 42, 34 44 Z'/%3E%3Cpath d='M34 44 L 41 36'/%3E%3C/g%3E%3C/svg%3E");
+  --tile-x: 48px;
+  --tile-y: 48px;
+}
+html.dark[data-theme="sage"] {
+  --primary: #a3bba9;
+  --primary-foreground: #0e120f;
+  --ring: #a3bba9;
+  --background: #0d110e;
+  --foreground: #eef1ec;
+  --card: #18201b;
+  --card-foreground: #eef1ec;
+  --popover: #222b25;
+  --popover-foreground: #eef1ec;
+  --secondary: #2a352d;
+  --secondary-foreground: #eef1ec;
+  --accent: #33413a;
+  --accent-foreground: #eef1ec;
+  --muted: #18201b;
+  --muted-foreground: #9aa59d;
+  --border: rgba(163, 187, 169, 0.18);
+  --input: rgba(163, 187, 169, 0.26);
+  --fill: rgba(163, 187, 169, 0.16);
+  --destructive: #e0574f;
+  --ios-red: #e0574f;
+  --glass: rgba(16, 21, 18, 0.74);
+  --brand: #5e7a66;
+  --brand-2: #2f4034;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23a3bba9' stroke-opacity='.12' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M10 30 C 10 20, 20 14, 26 12 C 24 20, 18 28, 10 30 Z'/%3E%3Cpath d='M10 30 L 22 17'/%3E%3Cpath d='M34 44 C 34 38, 40 34, 44 33 C 43 38, 39 42, 34 44 Z'/%3E%3Cpath d='M34 44 L 41 36'/%3E%3C/g%3E%3C/svg%3E");
+}
+.ambient-orb { opacity: .45; }
+
+/* ---------- recurring logo shine (clipped to the logo shape) ---------- */
+.logo-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask-image: url("/brand/logo-black.png");
+  mask-image: url("/brand/logo-black.png");
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  background-image: linear-gradient(105deg, transparent 38%, color-mix(in srgb, var(--brand-2) 55%, #fff) 47%, #fff 50%, color-mix(in srgb, var(--brand-2) 55%, #fff) 53%, transparent 62%);
+  background-size: 280% 100%;
+  background-repeat: no-repeat;
+  background-position: 160% 0;
+  animation: logo-shine 5s ease-in-out infinite;
+}
+.dark .logo-shine {
+  background-image: linear-gradient(105deg, transparent 38%, color-mix(in srgb, var(--brand-2) 70%, transparent) 47%, var(--brand-2) 50%, color-mix(in srgb, var(--brand-2) 70%, transparent) 53%, transparent 62%);
+}
+html.dark:not([data-theme]) .logo-shine {
+  background-image: linear-gradient(105deg, transparent 38%, rgba(160,160,170,.55) 47%, rgba(120,120,130,.9) 50%, rgba(160,160,170,.55) 53%, transparent 62%);
+}
+@keyframes logo-shine {
+  0%, 52% { background-position: 160% 0; }
+  82%, 100% { background-position: -60% 0; }
+}
+
+/* ---------- animated ambient background ---------- */
+.ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.ambient-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(1100px 520px at 50% -140px, color-mix(in srgb, var(--brand) 18%, transparent), transparent 72%);
+}
+.ambient-pattern {
+  position: absolute;
+  inset: calc(var(--tile-y, 64px) * -2) calc(var(--tile-x, 64px) * -2);
+  background-image: var(--pattern);
+  will-change: transform;
+  animation: pattern-drift 18s linear infinite;
+}
+@keyframes pattern-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(var(--tile-x, 22px), var(--tile-y, 22px), 0); }
+}
+.ambient-orb {
+  position: absolute;
+  width: 46vmax; height: 46vmax;
+  border-radius: 50%;
+  will-change: transform;
+  opacity: .55;
+}
+.dark .ambient-orb { opacity: .45; }
+.ambient-orb-1 {
+  top: -14vmax; inset-inline-start: -12vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 26%, transparent) 0%, transparent 62%);
+  animation: orb-a 26s ease-in-out infinite alternate;
+}
+.ambient-orb-2 {
+  bottom: -18vmax; inset-inline-end: -14vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-2) 24%, transparent) 0%, transparent 62%);
+  animation: orb-b 32s ease-in-out infinite alternate;
+}
+.ambient-orb-3 {
+  top: 38%; left: 30%;
+  width: 30vmax; height: 30vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-2) 16%, transparent) 0%, transparent 65%);
+  animation: orb-c 38s ease-in-out infinite alternate;
+}
+@keyframes orb-a { to { transform: translate3d(14vmax, 10vmax, 0) scale(1.15); } }
+@keyframes orb-b { to { transform: translate3d(-12vmax, -14vmax, 0) scale(1.1); } }
+@keyframes orb-c { to { transform: translate3d(-10vmax, 8vmax, 0) scale(.85); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-shine, .ambient-pattern, .ambient-orb { animation: none !important; }
+}

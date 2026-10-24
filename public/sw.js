@@ -9,8 +9,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
-      icon: "/icon-192.png",
-      badge: "/favicon-32.png",
+      icon: "/icons/icon-192.png?v=3",
+      badge: "/icons/favicon-32.png?v=3",
       tag: data.tag || undefined,
       renotify: true,
       dir: "rtl",

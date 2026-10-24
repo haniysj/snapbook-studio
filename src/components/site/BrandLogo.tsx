@@ -4,19 +4,21 @@ import { cn } from "@/lib/utils";
 
 /**
  * The 7 CAM logo. Uses the bundled transparent logo (black in light mode, white in dark mode)
- * unless a custom logo was uploaded from Settings.
+ * unless a custom logo was uploaded from Settings. The bundled logo gets a recurring shine
+ * that is clipped to the logo's own shape.
  */
-export function BrandLogo({ className, alt }: { className?: string; alt?: string }) {
+export function BrandLogo({ className, alt, shine = true, shineDelay }: { className?: string; alt?: string; shine?: boolean; shineDelay?: string }) {
   const { settings } = useSettings();
   const label = alt ?? settings.site_name;
   if (settings.logo_url) {
     return <MediaImage path={settings.logo_url} alt={label} className={cn("object-contain", className)} />;
   }
   return (
-    <>
-      <img src="/brand/logo-black.png" alt={label} className={cn("object-contain dark:hidden", className)} draggable={false} />
+    <span className="relative inline-block shrink-0 align-middle leading-none">
+      <img src="/brand/logo-black.png" alt={label} className={cn("block object-contain dark:hidden", className)} draggable={false} />
       <img src="/brand/logo-white.png" alt={label} className={cn("hidden object-contain dark:block", className)} draggable={false} />
-    </>
+      {shine && <span aria-hidden className="logo-shine" style={shineDelay ? { animationDelay: shineDelay } : undefined} />}
+    </span>
   );
 }
 

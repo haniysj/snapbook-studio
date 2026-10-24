@@ -99,7 +99,8 @@ select * from (values ('أعراس', 'Weddings', 1), ('مناسبات', 'Events'
 where not exists (select 1 from seven.gallery_categories);
 
 -- ===== v2: site themes + booking notifications =====
-alter table seven.settings add column if not exists theme text not null default 'classic';
+alter table seven.settings add column if not exists theme text not null default 'sage';
+alter table seven.settings alter column theme set default 'sage';
 -- per-supervisor "seen" marker for the notification bell
 alter table seven.admin_users add column if not exists last_seen_bookings_at timestamptz not null default now();
 -- phone/browser push subscriptions (one row per device)

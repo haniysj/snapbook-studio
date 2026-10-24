@@ -120,9 +120,9 @@ export function SettingsTab() {
       </FormGroup>
 
       <FormGroup label={ar ? "ثيم المنصة" : "Site theme"} footer={ar ? "يتغيّر لون المنصة ونقش الخلفية لجميع الزوار فوراً. الوضع الفاتح/الداكن يتبع جهاز الزائر." : "Changes colors and background pattern for every visitor. Light/dark still follows each device."}>
-        <div className="grid grid-cols-3 gap-2.5 p-3 sm:grid-cols-6">
+        <div className="grid grid-cols-4 gap-2 p-3 sm:grid-cols-7">
           {THEMES.map((th) => {
-            const active = (settings.theme || "classic") === th.id;
+            const active = (settings.theme || "sage") === th.id;
             return (
               <button
                 key={th.id}

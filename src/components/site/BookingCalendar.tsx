@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 export function toDate(s: string): Date {
   const [y, m, d] = s.split("-").map(Number);
@@ -41,6 +42,7 @@ export function StudioCalendar({
   bookedDates: Date[];
 }) {
   const { lang } = useLang();
+  const ar = lang === "ar";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return (
@@ -60,7 +62,7 @@ export function StudioCalendar({
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
         <Legend dot="bg-primary" label={t(lang, "legend_selected")} />
         <Legend dot="bg-ios-red" label={t(lang, "legend_booked")} />
-        <Legend dot="bg-ios-blue" label={t(lang, "legend_weekend")} />
+        <Legend dot="bg-[color-mix(in_srgb,var(--brand)_35%,transparent)] h-3 w-3 rounded-[4px]" label={ar ? "الجمعة والسبت" : "Fri & Sat"} />
       </div>
     </div>
   );
@@ -96,7 +98,7 @@ export function BookingCalendar() {
 function Legend({ dot, label }: { dot: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={`h-2 w-2 rounded-full ${dot}`} />
+      <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
       {label}
     </span>
   );

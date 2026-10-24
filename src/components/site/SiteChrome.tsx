@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export function SiteShell({ children, title }: { children: ReactNode; title?: string }) {
   const { settings } = useSettings();
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh">
       <Header title={title} />
       <main className="mb-tabbar md:mb-0">{children}</main>
       <footer className="mb-tabbar px-4 pb-8 pt-4 text-center text-xs text-muted-foreground md:mb-0">

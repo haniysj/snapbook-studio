@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsapp_number: "+96896763697",
   bank_details: "",
   instagram_url: null,
-  theme: "classic",
+  theme: "sage",
 };
 
 
@@ -87,7 +87,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         whatsapp_number: data.whatsapp_number,
         bank_details: data.bank_details ?? "",
         instagram_url: (data as any).instagram_url ?? null,
-        theme: (data as any).theme ?? "classic",
+        theme: (data as any).theme ?? "sage",
       });
       setSettingsLoaded(true);
     }
