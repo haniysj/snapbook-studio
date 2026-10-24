@@ -116,13 +116,12 @@ export function PackagesTab() {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <span className="truncate font-bold">{ar ? p.name_ar : p.name_en || p.name_ar}</span>
-                      {offer && <span className="whitespace-nowrap rounded-full bg-ios-orange/15 px-2 py-px text-[10px] font-bold text-ios-orange">{ar ? "عرض" : "Offer"}</span>}
                     </span>
                     <span className="block truncate text-[13px] text-muted-foreground">{p.description_ar}</span>
                   </span>
-                  <span className="flex shrink-0 flex-col items-end whitespace-nowrap text-[15px] font-bold" dir="ltr">
+                  <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[15px] font-bold" dir="ltr">
+                    {offer && <OldPrice amount={formatPrice(p.price as number)} code={p.currency} lang={lang} className="gap-1 text-[11px]" />}
                     <span className="inline-flex items-center gap-1"><Currency code={p.currency} className="text-muted-foreground" />{formatPrice(offer ? p.discounted_price as number : p.price as number)}</span>
-                    {offer && <OldPrice amount={formatPrice(p.price as number)} code={p.currency} lang={lang} className="text-[11px]" />}
                   </span>
                   <Chevron className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                 </button>

@@ -151,9 +151,9 @@ function BookPage() {
                     <span className="block truncate text-xs text-muted-foreground">{ar ? p.description_ar : p.description_en || p.description_ar}</span>
                   )}
                 </span>
-                <span className="flex shrink-0 flex-col items-end text-end" dir="ltr">
-                  <span className="flex items-center justify-end gap-1 whitespace-nowrap font-bold"><Currency code={p.currency} className="text-muted-foreground" />{formatPrice(offer ? p.discounted_price : p.price)}</span>
-                  {offer && <OldPrice amount={formatPrice(p.price)} code={p.currency} lang={lang} className="mt-0.5 justify-end text-[11px]" />}
+                <span className="flex shrink-0 items-center gap-2" dir="ltr">
+                  {offer && <OldPrice amount={formatPrice(p.price)} code={p.currency} lang={lang} className="text-[12px]" />}
+                  <span className="flex items-center gap-1 whitespace-nowrap font-bold"><Currency code={p.currency} className="text-muted-foreground" />{formatPrice(offer ? p.discounted_price : p.price)}</span>
                 </span>
               </button>
             );

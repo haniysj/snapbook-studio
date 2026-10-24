@@ -43,7 +43,10 @@ export function OldPrice({
       <span dir="ltr" className="relative inline-flex items-center gap-1">
         <Currency code={code} />
         <span>{amount}</span>
-        <span aria-hidden className="pointer-events-none absolute inset-x-[-2px] top-1/2 h-[1.5px] -translate-y-1/2 rounded bg-current" />
+        {/* diagonal strike (bottom-left → top-right) so the digits stay readable */}
+        <svg aria-hidden viewBox="0 0 100 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-[-2px] inset-y-[18%] h-[64%] w-[calc(100%+4px)] overflow-visible">
+          <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeOpacity="0.7" strokeWidth="1.1" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+        </svg>
       </span>
     </span>
   );
