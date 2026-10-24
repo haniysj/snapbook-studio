@@ -152,7 +152,7 @@ function BookPage() {
                   )}
                 </span>
                 <span className="shrink-0 text-end" dir="ltr">
-                  <span className="block whitespace-nowrap font-bold">{formatPrice(offer ? p.discounted_price : p.price)} <Currency code={p.currency} className="text-xs font-semibold text-muted-foreground" /></span>
+                  <span className="flex items-center justify-end gap-1 whitespace-nowrap font-bold"><Currency code={p.currency} className="text-muted-foreground" />{formatPrice(offer ? p.discounted_price : p.price)}</span>
                   {offer && <span className="block text-xs text-muted-foreground line-through">{formatPrice(p.price)}</span>}
                 </span>
               </button>

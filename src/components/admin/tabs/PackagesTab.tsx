@@ -121,7 +121,7 @@ export function PackagesTab() {
                     <span className="block truncate text-[13px] text-muted-foreground">{p.description_ar}</span>
                   </span>
                   <span className="shrink-0 whitespace-nowrap text-[15px] font-bold" dir="ltr">
-                    {formatPrice(offer ? p.discounted_price as number : p.price as number)} <Currency code={p.currency} className="text-xs text-muted-foreground" />
+                    <span className="inline-flex items-center gap-1"><Currency code={p.currency} className="text-muted-foreground" />{formatPrice(offer ? p.discounted_price as number : p.price as number)}</span>
                   </span>
                   <Chevron className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                 </button>

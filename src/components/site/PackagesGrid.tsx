@@ -82,9 +82,9 @@ export function PackagesGrid() {
                   )}
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
+                <div className="mt-3 flex flex-wrap items-center gap-x-2">
                   <span className="text-4xl font-extrabold tracking-tight">{formatPrice(offer ? p.discounted_price : p.price)}</span>
-                  <Currency code={p.currency} className={cn("text-sm font-semibold", featured ? "opacity-70" : "text-muted-foreground")} />
+                  <Currency code={p.currency} className={cn("text-[1.7rem]", featured ? "opacity-80" : "text-muted-foreground")} />
                   {offer && <span className={cn("text-base line-through", featured ? "opacity-60" : "text-muted-foreground")}>{formatPrice(p.price)}</span>}
                 </div>
                 {offer && p.offer_expiry_date && (
