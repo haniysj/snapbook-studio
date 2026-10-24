@@ -55,10 +55,16 @@ export function PackagesTab() {
     refresh();
   };
 
+  // Optimistic: flip the switch immediately, save in the background, revert if it fails.
   const toggle = async (p: Pkg, active: boolean) => {
+    qc.setQueryData<Pkg[]>(["admin_packages"], (old) => old?.map((x) => (x.id === p.id ? { ...x, active } : x)));
     const { error } = await supabase.from("packages").update({ active }).eq("id", p.id!);
-    if (error) return toast.error(error.message);
-    refresh();
+    if (error) {
+      qc.setQueryData<Pkg[]>(["admin_packages"], (old) => old?.map((x) => (x.id === p.id ? { ...x, active: !active } : x)));
+      return toast.error(error.message);
+    }
+    toast.success(active ? (ar ? "الباقة ظاهرة للعملاء" : "Package visible") : (ar ? "تم إخفاء الباقة" : "Package hidden"), { duration: 1500 });
+    qc.invalidateQueries({ queryKey: ["packages"] });
   };
 
   const move = async (i: number, dir: -1 | 1) => {

@@ -16,7 +16,7 @@ export const TABLES: Record<string, TableDef> = {
   settings: {
     cols: {
       id: "int", site_name: "text", logo_url: "text", whatsapp_number: "text",
-      bank_details: "text", instagram_url: "text", updated_at: "ts",
+      bank_details: "text", instagram_url: "text", theme: "text", updated_at: "ts",
     },
     publicSelect: true,
   },
@@ -199,6 +199,11 @@ export async function runQuery(req: QueryReq) {
         keys.map((k) => vals[k]),
       );
       out.push(...rows);
+    }
+    if (!admin && req.table === "bookings" && out[0]?.id) {
+      // Alert every supervisor's devices about the new booking.
+      const { notifyNewBooking } = await import("./push");
+      await notifyNewBooking(String(out[0].id));
     }
     return admin ? out : null; // anonymous callers never read rows back
   }

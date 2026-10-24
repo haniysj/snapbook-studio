@@ -64,13 +64,13 @@ export function PackagesGrid() {
                 key={p.id}
                 className={cn(
                   "flex flex-col rounded-[1.25rem] p-5 transition md:p-6",
-                  featured ? "bg-primary text-primary-foreground shadow-xl" : "ios-card",
+                  featured ? "brand-gradient text-white shadow-[0_18px_40px_-18px_var(--brand)]" : "ios-card",
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-lg font-extrabold">{name}</h3>
                   {featured && (
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary-foreground/15 px-2.5 py-0.5 text-[11px] font-bold">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold">
                       <Sparkles className="h-3 w-3" /> {lang === "ar" ? "الأكثر طلباً" : "Popular"}
                     </span>
                   )}
@@ -96,7 +96,7 @@ export function PackagesGrid() {
                   <ul className="mt-4 space-y-2 text-[14px]">
                     {items.map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full", featured ? "bg-primary-foreground/15" : "bg-fill")}>
+                        <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full", featured ? "bg-white/20" : "bg-fill")}>
                           <Check className="h-3 w-3" strokeWidth={3} />
                         </span>
                         <span>{f}</span>
@@ -111,7 +111,7 @@ export function PackagesGrid() {
                     search={{ package_id: p.id }}
                     className={cn(
                       "tap flex h-11 items-center justify-center rounded-full text-[15px] font-bold",
-                      featured ? "bg-primary-foreground text-primary" : "bg-primary text-primary-foreground",
+                      featured ? "bg-white text-black" : "bg-primary text-primary-foreground",
                     )}
                   >
                     {lang === "ar" ? "اختر هذه الباقة" : "Choose this package"}

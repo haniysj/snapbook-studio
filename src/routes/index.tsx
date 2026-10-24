@@ -22,7 +22,8 @@ function HomePage() {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="mx-auto flex max-w-6xl flex-col items-center px-5 pb-10 pt-10 text-center md:pb-16 md:pt-16">
-          <div className="rise">
+          <div className="rise relative isolate">
+            <div aria-hidden className="brand-gradient absolute left-1/2 top-1/2 -z-10 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-25 blur-3xl md:h-72 md:w-72" />
             <BrandLogo className="mx-auto h-40 w-auto md:h-56" />
           </div>
           <h1 className="rise large-title mt-6 md:text-5xl" style={{ animationDelay: "80ms" }}>

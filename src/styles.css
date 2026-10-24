@@ -254,3 +254,143 @@
   .rise, .pulse-ring { animation: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ============================================================
+   Site themes (chosen in Settings). Each sets accent, page tint,
+   brand gradient and a faint background pattern, for light & dark.
+   ============================================================ */
+:root {
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --ring: #000000;
+  --background: #f2f2f7;
+  --brand: #1c1c1e;
+  --brand-2: #48484a;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.1' fill='%23000' fill-opacity='.07'/%3E%3C/svg%3E");
+}
+html.dark {
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --ring: #ffffff;
+  --background: #000000;
+  --card: #1c1c1e;
+  --muted: #1c1c1e;
+  --brand: #3a3a3c;
+  --brand-2: #1c1c1e;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.1' fill='%23fff' fill-opacity='.07'/%3E%3C/svg%3E");
+}
+html[data-theme="sand"] {
+  --primary: #9a6b1f;
+  --primary-foreground: #ffffff;
+  --ring: #9a6b1f;
+  --background: #f6f0e6;
+  --brand: #b8862b;
+  --brand-2: #e3b964;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%239a6b1f' stroke-opacity='.11' stroke-width='1'%3E%3Crect x='18' y='18' width='20' height='20'/%3E%3Crect x='18' y='18' width='20' height='20' transform='rotate%2845 28 28%29'/%3E%3Ccircle cx='0' cy='0' r='3'/%3E%3Ccircle cx='56' cy='0' r='3'/%3E%3Ccircle cx='0' cy='56' r='3'/%3E%3Ccircle cx='56' cy='56' r='3'/%3E%3C/g%3E%3C/svg%3E");
+}
+html.dark[data-theme="sand"] {
+  --primary: #d9a94e;
+  --primary-foreground: #1a1206;
+  --ring: #d9a94e;
+  --background: #0f0c07;
+  --card: #1d1810;
+  --muted: #1d1810;
+  --brand: #a5772a;
+  --brand-2: #5e4214;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23d9a94e' stroke-opacity='.09' stroke-width='1'%3E%3Crect x='18' y='18' width='20' height='20'/%3E%3Crect x='18' y='18' width='20' height='20' transform='rotate%2845 28 28%29'/%3E%3Ccircle cx='0' cy='0' r='3'/%3E%3Ccircle cx='56' cy='0' r='3'/%3E%3Ccircle cx='0' cy='56' r='3'/%3E%3Ccircle cx='56' cy='56' r='3'/%3E%3C/g%3E%3C/svg%3E");
+}
+html[data-theme="ocean"] {
+  --primary: #0b6e78;
+  --primary-foreground: #ffffff;
+  --ring: #0b6e78;
+  --background: #edf4f5;
+  --brand: #0e7c86;
+  --brand-2: #38b6c0;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath d='M0 12 Q 12 2 24 12 T 48 12' fill='none' stroke='%230b6e78' stroke-opacity='.12' stroke-width='1.2'/%3E%3C/svg%3E");
+}
+html.dark[data-theme="ocean"] {
+  --primary: #3cc3cc;
+  --primary-foreground: #03191b;
+  --ring: #3cc3cc;
+  --background: #05100f;
+  --card: #0f1d1e;
+  --muted: #0f1d1e;
+  --brand: #0e7c86;
+  --brand-2: #0a3c40;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath d='M0 12 Q 12 2 24 12 T 48 12' fill='none' stroke='%233cc3cc' stroke-opacity='.10' stroke-width='1.2'/%3E%3C/svg%3E");
+}
+html[data-theme="rose"] {
+  --primary: #a63d61;
+  --primary-foreground: #ffffff;
+  --ring: #a63d61;
+  --background: #f8f0f2;
+  --brand: #b5476b;
+  --brand-2: #e58aa6;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18'%3E%3Cpath d='M-2 20 L20 -2' stroke='%23a63d61' stroke-opacity='.09' stroke-width='1'/%3E%3C/svg%3E");
+}
+html.dark[data-theme="rose"] {
+  --primary: #ec8fac;
+  --primary-foreground: #22070f;
+  --ring: #ec8fac;
+  --background: #0f0709;
+  --card: #1d1115;
+  --muted: #1d1115;
+  --brand: #a63d61;
+  --brand-2: #4e1a2b;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18'%3E%3Cpath d='M-2 20 L20 -2' stroke='%23ec8fac' stroke-opacity='.08' stroke-width='1'/%3E%3C/svg%3E");
+}
+html[data-theme="olive"] {
+  --primary: #4e6b30;
+  --primary-foreground: #ffffff;
+  --ring: #4e6b30;
+  --background: #f1f4ec;
+  --brand: #5b7a3a;
+  --brand-2: #9bbf6a;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg fill='none' stroke='%234e6b30' stroke-opacity='.11'%3E%3Ccircle cx='22' cy='22' r='7'/%3E%3Ccircle cx='22' cy='22' r='2.5'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='44' cy='44' r='4'/%3E%3Ccircle cx='44' cy='0' r='4'/%3E%3Ccircle cx='0' cy='44' r='4'/%3E%3C/g%3E%3C/svg%3E");
+}
+html.dark[data-theme="olive"] {
+  --primary: #a8cc78;
+  --primary-foreground: #0c1404;
+  --ring: #a8cc78;
+  --background: #090c06;
+  --card: #151a10;
+  --muted: #151a10;
+  --brand: #4e6b30;
+  --brand-2: #26341a;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg fill='none' stroke='%23a8cc78' stroke-opacity='.09'%3E%3Ccircle cx='22' cy='22' r='7'/%3E%3Ccircle cx='22' cy='22' r='2.5'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='44' cy='44' r='4'/%3E%3Ccircle cx='44' cy='0' r='4'/%3E%3Ccircle cx='0' cy='44' r='4'/%3E%3C/g%3E%3C/svg%3E");
+}
+html[data-theme="night"] {
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --ring: #4f46e5;
+  --background: #f0f0fa;
+  --brand: #4f46e5;
+  --brand-2: #8b85ff;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='%234f46e5' fill-opacity='.16'%3E%3Ccircle cx='8' cy='10' r='1.2'/%3E%3Ccircle cx='40' cy='6' r='.8'/%3E%3Ccircle cx='26' cy='30' r='1.5'/%3E%3Ccircle cx='54' cy='38' r='1'/%3E%3Ccircle cx='12' cy='50' r='.8'/%3E%3Ccircle cx='44' cy='58' r='1.3'/%3E%3Cpath d='M50 18 l1 2.5 2.5 1 -2.5 1 -1 2.5 -1 -2.5 -2.5 -1 2.5 -1z'/%3E%3C/g%3E%3C/svg%3E");
+}
+html.dark[data-theme="night"] {
+  --primary: #9b95ff;
+  --primary-foreground: #0b0930;
+  --ring: #9b95ff;
+  --background: #07071a;
+  --card: #131330;
+  --muted: #131330;
+  --brand: #3f37c9;
+  --brand-2: #1c1858;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='%23c9c6ff' fill-opacity='.22'%3E%3Ccircle cx='8' cy='10' r='1.2'/%3E%3Ccircle cx='40' cy='6' r='.8'/%3E%3Ccircle cx='26' cy='30' r='1.5'/%3E%3Ccircle cx='54' cy='38' r='1'/%3E%3Ccircle cx='12' cy='50' r='.8'/%3E%3Ccircle cx='44' cy='58' r='1.3'/%3E%3Cpath d='M50 18 l1 2.5 2.5 1 -2.5 1 -1 2.5 -1 -2.5 -2.5 -1 2.5 -1z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@layer base {
+  body {
+    background-image:
+      radial-gradient(1100px 520px at 50% -140px, color-mix(in srgb, var(--brand) 18%, transparent), transparent 72%),
+      var(--pattern);
+    background-repeat: no-repeat, repeat;
+  }
+}
+@utility brand-gradient { background-image: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%); }
+@utility brand-text {
+  background-image: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+

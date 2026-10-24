@@ -97,3 +97,20 @@ select * from (values
 insert into seven.gallery_categories (name_ar, name_en, sort_order)
 select * from (values ('أعراس', 'Weddings', 1), ('مناسبات', 'Events', 2), ('بورتريه', 'Portrait', 3)) v
 where not exists (select 1 from seven.gallery_categories);
+
+-- ===== v2: site themes + booking notifications =====
+alter table seven.settings add column if not exists theme text not null default 'classic';
+-- per-supervisor "seen" marker for the notification bell
+alter table seven.admin_users add column if not exists last_seen_bookings_at timestamptz not null default now();
+-- phone/browser push subscriptions (one row per device)
+create table if not exists seven.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  admin_id uuid not null references seven.admin_users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+create index if not exists push_subscriptions_admin_idx on seven.push_subscriptions (admin_id);
+create index if not exists bookings_created_at_idx on seven.bookings (created_at);

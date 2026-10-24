@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { supabase } from "@/integrations/supabase/client";
 import { signedMediaUrl } from "./helpers";
 import type { Lang } from "./i18n";
+import { applySiteTheme } from "./themes";
 
 /* -------- Theme -------- */
 type Theme = "light" | "dark";
@@ -19,6 +20,7 @@ export type SiteSettings = {
   whatsapp_number: string;
   bank_details: string;
   instagram_url: string | null;
+  theme: string;
 };
 type SettingsCtx = { settings: SiteSettings; refresh: () => Promise<void> };
 const SettingsContext = createContext<SettingsCtx | null>(null);
@@ -29,6 +31,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsapp_number: "+96896763697",
   bank_details: "",
   instagram_url: null,
+  theme: "classic",
 };
 
 
@@ -36,6 +39,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [lang, setLangState] = useState<Lang>("ar");
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Theme follows the phone's light/dark setting until the visitor picks one explicitly.
@@ -83,7 +87,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         whatsapp_number: data.whatsapp_number,
         bank_details: data.bank_details ?? "",
         instagram_url: (data as any).instagram_url ?? null,
+        theme: (data as any).theme ?? "classic",
       });
+      setSettingsLoaded(true);
     }
 
   }, []);
@@ -91,6 +97,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Site color theme chosen in Settings (cached in localStorage for a flash-free first paint)
+  useEffect(() => { if (hydrated && settingsLoaded) applySiteTheme(settings.theme); }, [settings.theme, hydrated, settingsLoaded]);
 
   // Sync favicon + document title with site settings (logo + name)
   useEffect(() => {

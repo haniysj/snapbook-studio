@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ImageUp, Loader2, RotateCcw } from "lucide-react";
+import { Check, ImageUp, Loader2, RotateCcw } from "lucide-react";
+import { THEMES, applySiteTheme } from "@/lib/themes";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, useSettings } from "@/lib/app-context";
@@ -68,6 +69,19 @@ export function SettingsTab() {
     }
   };
 
+  const [themeBusy, setThemeBusy] = useState<string | null>(null);
+  const chooseTheme = async (id: string) => {
+    if (id === settings.theme) return;
+    const prev = settings.theme;
+    applySiteTheme(id); // preview instantly
+    setThemeBusy(id);
+    const { error } = await supabase.from("settings").update({ theme: id }).eq("id", 1);
+    setThemeBusy(null);
+    if (error) { applySiteTheme(prev); return toast.error(error.message); }
+    await refresh();
+    toast.success(ar ? "تم تطبيق الثيم على المنصة" : "Theme applied to the site");
+  };
+
   const save = async () => {
     if (!siteName.trim()) return toast.error(ar ? "اكتب اسم المنصة" : "Enter the site name");
     setSaving(true);
@@ -102,6 +116,35 @@ export function SettingsTab() {
             )}
             <span className="text-xs text-muted-foreground">{ar ? "يفضّل PNG بخلفية شفافة" : "Transparent PNG works best"}</span>
           </div>
+        </div>
+      </FormGroup>
+
+      <FormGroup label={ar ? "ثيم المنصة" : "Site theme"} footer={ar ? "يتغيّر لون المنصة ونقش الخلفية لجميع الزوار فوراً. الوضع الفاتح/الداكن يتبع جهاز الزائر." : "Changes colors and background pattern for every visitor. Light/dark still follows each device."}>
+        <div className="grid grid-cols-3 gap-2.5 p-3 sm:grid-cols-6">
+          {THEMES.map((th) => {
+            const active = (settings.theme || "classic") === th.id;
+            return (
+              <button
+                key={th.id}
+                type="button"
+                onClick={() => chooseTheme(th.id)}
+                aria-pressed={active}
+                className={cn(
+                  "tap flex flex-col items-center gap-1.5 rounded-2xl p-2 transition",
+                  active ? "bg-fill ring-2 ring-primary" : "hover:bg-fill/60",
+                )}
+              >
+                <span
+                  className="relative grid h-12 w-12 place-items-center rounded-full shadow-inner"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${th.swatch[0]}, ${th.swatch[1]})` }}
+                >
+                  {themeBusy === th.id ? <Loader2 className="h-5 w-5 animate-spin text-white" /> : active && <Check className="h-5 w-5 text-white" strokeWidth={3} />}
+                </span>
+                <span className="text-[13px] font-bold leading-tight">{ar ? th.ar : th.en}</span>
+                <span className="text-[10.5px] leading-tight text-muted-foreground">{ar ? th.patternAr : th.patternEn}</span>
+              </button>
+            );
+          })}
         </div>
       </FormGroup>
 

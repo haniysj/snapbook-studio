@@ -6,8 +6,10 @@ export function whatsappUrl(number: string, message?: string): string {
   let clean = (number || "").replace(/[^\d]/g, "").replace(/^00/, "");
   // Local Omani mobile/landline numbers (8 digits) → add the 968 country code
   if (/^[2479]\d{7}$/.test(clean)) clean = `968${clean}`;
-  const base = `https://wa.me/${clean}`;
-  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+  // api.whatsapp.com/send opens both WhatsApp and WhatsApp Business (and WhatsApp Web on computers);
+  // the wa.me short link fails on some phones.
+  const base = `https://api.whatsapp.com/send?phone=${clean}`;
+  return message ? `${base}&text=${encodeURIComponent(message)}` : base;
 }
 
 export function usernameToEmail(username: string): string {

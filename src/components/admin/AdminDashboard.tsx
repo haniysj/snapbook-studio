@@ -11,6 +11,7 @@ import { GalleryTab } from "./tabs/GalleryTab";
 import { SettingsTab } from "./tabs/SettingsTab";
 import { UsersTab } from "./tabs/UsersTab";
 import { cn } from "@/lib/utils";
+import { NotificationsBell, useLiveBookingAlerts } from "./Notifications";
 
 type TabId = "bookings" | "packages" | "gallery" | "settings" | "users";
 
@@ -19,6 +20,7 @@ export function AdminDashboard({ session }: { session: Session }) {
   const ar = lang === "ar";
   const isSuper = !!session.user.user_metadata.is_super;
   const [tab, setTab] = useState<TabId>("bookings");
+  useLiveBookingAlerts();
 
   // pending count for the badge
   const { data: pending = 0 } = useQuery({
@@ -56,6 +58,8 @@ export function AdminDashboard({ session }: { session: Session }) {
             </span>
           </div>
         </div>
+        <div className="flex shrink-0 items-center gap-2">
+        <NotificationsBell />
         <button
           type="button"
           onClick={() => supabase.auth.signOut()}
@@ -65,6 +69,7 @@ export function AdminDashboard({ session }: { session: Session }) {
           <LogOut className="h-4 w-4" />
           <span className="hidden sm:inline">{t(lang, "sign_out")}</span>
         </button>
+        </div>
       </div>
 
       {/* tablets/desktop: segmented control */}
