@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Currency } from "@/components/site/Currency";
+import { Currency, OldPrice } from "@/components/site/Currency";
 import { Link } from "@tanstack/react-router";
 import { Check, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,8 +85,15 @@ export function PackagesGrid() {
                 <div className="mt-3 flex flex-wrap items-center gap-x-2">
                   <span className="text-4xl font-extrabold tracking-tight">{formatPrice(offer ? p.discounted_price : p.price)}</span>
                   <Currency code={p.currency} className={cn("text-[1.7rem]", featured ? "opacity-80" : "text-muted-foreground")} />
-                  {offer && <span className={cn("text-base line-through", featured ? "opacity-60" : "text-muted-foreground")}>{formatPrice(p.price)}</span>}
                 </div>
+                {offer && (
+                  <OldPrice
+                    amount={formatPrice(p.price)}
+                    code={p.currency}
+                    lang={lang}
+                    className={cn("mt-1.5 self-start rounded-full px-2.5 py-0.5 text-[13px]", featured ? "bg-white shadow-sm" : "bg-ios-red/10")}
+                  />
+                )}
                 {offer && p.offer_expiry_date && (
                   <p className={cn("mt-1 text-xs font-semibold", featured ? "opacity-80" : "text-ios-orange")}>
                     {t(lang, "offer_expires")}: {new Date(p.offer_expiry_date).toLocaleDateString(lang === "ar" ? "ar-OM" : "en-GB", { day: "numeric", month: "long" })}

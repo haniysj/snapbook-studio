@@ -20,3 +20,31 @@ export function OmrSign({ className }: { className?: string }) {
     </span>
   );
 }
+
+/**
+ * Original price shown when a package has an active discount:
+ * always red, struck through, with the Rial symbol and «سابقاً».
+ * The strike is drawn as a line so it also crosses the SVG symbol.
+ */
+export function OldPrice({
+  amount,
+  code,
+  lang = "ar",
+  className,
+}: {
+  amount: string;
+  code?: string | null;
+  lang?: string;
+  className?: string;
+}) {
+  return (
+    <span dir={lang === "ar" ? "rtl" : "ltr"} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap font-bold text-ios-red", className)}>
+      <span>{lang === "ar" ? "سابقاً" : "Was"}</span>
+      <span dir="ltr" className="relative inline-flex items-center gap-1">
+        <Currency code={code} />
+        <span>{amount}</span>
+        <span aria-hidden className="pointer-events-none absolute inset-x-[-2px] top-1/2 h-[1.5px] -translate-y-1/2 rounded bg-current" />
+      </span>
+    </span>
+  );
+}
