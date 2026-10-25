@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarCheck, Images, LogOut, Package, Settings, ShieldCheck, Users } from "lucide-react";
+import { CalendarCheck, Images, LogOut, Package, ReceiptText, Settings, ShieldCheck, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, type Session } from "@/integrations/supabase/client";
 import { useLang } from "@/lib/app-context";
@@ -10,10 +10,11 @@ import { PackagesTab } from "./tabs/PackagesTab";
 import { GalleryTab } from "./tabs/GalleryTab";
 import { SettingsTab } from "./tabs/SettingsTab";
 import { UsersTab } from "./tabs/UsersTab";
+import { DocsTab } from "./tabs/DocsTab";
 import { cn } from "@/lib/utils";
 import { NotificationsBell, useLiveBookingAlerts } from "./Notifications";
 
-type TabId = "bookings" | "packages" | "gallery" | "settings" | "users";
+type TabId = "bookings" | "docs" | "packages" | "gallery" | "settings" | "users";
 
 export function AdminDashboard({ session }: { session: Session }) {
   const { lang } = useLang();
@@ -31,6 +32,7 @@ export function AdminDashboard({ session }: { session: Session }) {
 
   const tabs: { id: TabId; label: string; icon: typeof Users }[] = [
     { id: "bookings", label: t(lang, "tab_bookings"), icon: CalendarCheck },
+    { id: "docs", label: ar ? "الفواتير" : "Invoices", icon: ReceiptText },
     { id: "packages", label: t(lang, "tab_packages"), icon: Package },
     { id: "gallery", label: t(lang, "tab_gallery"), icon: Images },
     { id: "settings", label: t(lang, "tab_settings"), icon: Settings },
@@ -82,6 +84,7 @@ export function AdminDashboard({ session }: { session: Session }) {
 
       <div key={tab} className="rise">
         {tab === "bookings" && <BookingsTab />}
+        {tab === "docs" && <DocsTab isSuper={isSuper} myId={session.user.id} />}
         {tab === "packages" && <PackagesTab />}
         {tab === "gallery" && <GalleryTab />}
         {tab === "settings" && <SettingsTab />}

@@ -21,6 +21,10 @@ export type SiteSettings = {
   bank_details: string;
   instagram_url: string | null;
   theme: string;
+  invoice_header: string;
+  invoice_footer: string;
+  quote_header: string;
+  quote_footer: string;
 };
 type SettingsCtx = { settings: SiteSettings; refresh: () => Promise<void> };
 const SettingsContext = createContext<SettingsCtx | null>(null);
@@ -32,6 +36,10 @@ const DEFAULT_SETTINGS: SiteSettings = {
   bank_details: "",
   instagram_url: null,
   theme: "sage",
+  invoice_header: "",
+  invoice_footer: "",
+  quote_header: "",
+  quote_footer: "",
 };
 
 
@@ -88,6 +96,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
         bank_details: data.bank_details ?? "",
         instagram_url: (data as any).instagram_url ?? null,
         theme: (data as any).theme ?? "sage",
+        invoice_header: (data as any).invoice_header ?? "",
+        invoice_footer: (data as any).invoice_footer ?? "",
+        quote_header: (data as any).quote_header ?? "",
+        quote_footer: (data as any).quote_footer ?? "",
       });
       setSettingsLoaded(true);
     }

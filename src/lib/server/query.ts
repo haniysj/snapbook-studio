@@ -17,6 +17,7 @@ export const TABLES: Record<string, TableDef> = {
     cols: {
       id: "int", site_name: "text", logo_url: "text", whatsapp_number: "text",
       bank_details: "text", instagram_url: "text", theme: "text", updated_at: "ts",
+      invoice_header: "text", invoice_footer: "text", quote_header: "text", quote_footer: "text",
     },
     publicSelect: true,
   },

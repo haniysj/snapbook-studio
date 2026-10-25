@@ -115,3 +115,35 @@ create table if not exists seven.push_subscriptions (
 );
 create index if not exists push_subscriptions_admin_idx on seven.push_subscriptions (admin_id);
 create index if not exists bookings_created_at_idx on seven.bookings (created_at);
+
+-- ===== v3: invoices & quotations =====
+alter table seven.settings add column if not exists invoice_header text not null default '';
+alter table seven.settings add column if not exists invoice_footer text not null default 'شكراً لثقتكم بنا، يسعدنا توثيق لحظاتكم الجميلة.';
+alter table seven.settings add column if not exists quote_header text not null default '';
+alter table seven.settings add column if not exists quote_footer text not null default 'الأسعار بالريال العُماني. يُثبَّت الحجز بعد دفع الدفعة المقدمة.';
+
+create table if not exists seven.documents (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('invoice', 'quote')),
+  number text not null unique,
+  customer_name text not null,
+  customer_phone text not null default '',
+  customer_extra text not null default '',
+  booking_id uuid references seven.bookings(id) on delete set null,
+  issue_date date not null default current_date,
+  due_date date,               -- invoice: due date · quote: valid until
+  event_date date,
+  items jsonb not null default '[]'::jsonb,   -- [{ "desc": text, "qty": number, "price": number }]
+  discount numeric(12,3) not null default 0,
+  vat_rate numeric(5,2) not null default 0,
+  paid numeric(12,3) not null default 0,      -- invoice only
+  total numeric(12,3) not null default 0,
+  notes text not null default '',
+  status text not null default 'open',        -- quote: open / accepted / rejected
+  source_id uuid,                             -- invoice converted from this quote
+  created_by uuid references seven.admin_users(id) on delete set null,
+  created_by_name text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists documents_kind_created_idx on seven.documents (kind, created_at desc);
