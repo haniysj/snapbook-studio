@@ -23,6 +23,25 @@ const GREEN = "#2f8f4e";
 export const LETTERHEAD_SRC = "/brand/letterhead-a4.jpg";
 const LH = { navy: "#324049", brown: "#805e3b", tan: "#cba075", taupe: "#c0b7b0", soft: "#efe9e2", band: 58 };
 
+/**
+ * «الحروف المرسلة»: stretches the last joint of each word with tatweel (ـ), the elongated
+ * calligraphic look used for the adhkar on the mosque display. Display only.
+ */
+const NON_JOINING = new Set([..."اأإآدذرزوؤةءى"]);
+function kashida(text: string, count = 3) {
+  return text.replace(/[\u0621-\u064A\u064B-\u0652]+/g, (word) => {
+    const chars = [...word];
+    const letters = chars.map((c, i) => (/[\u0621-\u064A]/.test(c) ? i : -1)).filter((i) => i >= 0);
+    if (letters.length < 3) return word;
+    // the last joint whose first letter connects forward (لخدمـات، التصويـر)
+    for (let k = letters.length - 1; k > 0; k--) {
+      const at = letters[k], before = letters[k - 1];
+      if (!NON_JOINING.has(chars[before])) return chars.slice(0, at).join("") + "ـ".repeat(count) + chars.slice(at).join("");
+    }
+    return word;
+  });
+}
+
 /** Small brand badges used next to the phone and the Instagram handle. */
 function WhatsAppBadge() {
   return (
@@ -56,9 +75,9 @@ function Amount({ value, strong, color }: { value: number; strong?: boolean; col
 
 function Label({ ar, en }: { ar: string; en: string }) {
   return (
-    <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.2 }}>
+    <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.25, gap: 3 }}>
       <span>{ar}</span>
-      <span style={{ fontSize: 9.5, letterSpacing: 0.6, color: "inherit", opacity: 0.65, textTransform: "uppercase" }}>{en}</span>
+      <span style={{ fontSize: 9.5, letterSpacing: 0.6, color: "inherit", opacity: 0.65, textTransform: "uppercase", lineHeight: 1.1 }}>{en}</span>
     </span>
   );
 }
@@ -75,7 +94,6 @@ export const DocPage = forwardRef<HTMLDivElement, { doc: Doc; settings: SiteSett
   const header = (isInvoice ? settings.invoice_header : settings.quote_header) || "";
   const footer = (isInvoice ? settings.invoice_footer : settings.quote_footer) || "";
   const logo = settings.logo_url ? mediaSrc(settings.logo_url) : "/brand/logo-black.png";
-  const contact = [settings.whatsapp_number, settings.instagram_url?.replace(/^https?:\/\/(www\.)?/, "")].filter(Boolean);
 
   const metaRows: [string, string, string][] = [
     ["تاريخ الإصدار", "Issue date", fmtDate(doc.issue_date)],
@@ -93,7 +111,7 @@ export const DocPage = forwardRef<HTMLDivElement, { doc: Doc; settings: SiteSett
         minHeight: PAGE_H,
         background: "#ffffff",
         color: INK,
-        fontFamily: '"IBM Plex Sans Arabic", system-ui, sans-serif',
+        fontFamily: '"Cairo Variable", "Cairo", system-ui, sans-serif',
         fontSize: 13,
         display: "flex",
         flexDirection: "column",
@@ -121,15 +139,16 @@ export const DocPage = forwardRef<HTMLDivElement, { doc: Doc; settings: SiteSett
           <img src={logo} alt="" crossOrigin="anonymous" style={{ height: lh ? 66 : 78, width: "auto", maxWidth: lh ? 110 : 140, objectFit: "contain" }} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: lh ? 20 : 22, fontWeight: 700, lineHeight: 1.25, color: lh ? LH.navy : undefined }}>{settings.site_name}</div>
-            {header && <div style={{ marginTop: 4, whiteSpace: "pre-line", color: MUTED, fontSize: 12, lineHeight: 1.6 }}>{header}</div>}
-            {contact.length > 0 && (
-              <div dir="ltr" style={{ marginTop: 4, color: MUTED, fontSize: 12, textAlign: "right" }}>{contact.join("  ·  ")}</div>
+            {header && (
+              <div style={{ marginTop: 4, whiteSpace: "pre-line", color: lh ? LH.brown : MUTED, fontFamily: '"Thmanyah Serif Text", "Cairo Variable", serif', fontWeight: 500, fontSize: 20, lineHeight: 1.45 }}>
+                {kashida(header)}
+              </div>
             )}
           </div>
         </div>
         <div style={{ textAlign: "left", flexShrink: 0 }}>
           <div style={{ fontSize: lh ? 28 : 30, fontWeight: 700, color: lh ? LH.brown : accent, lineHeight: 1.1 }}>{isInvoice ? "فاتورة" : "عرض سعر"}</div>
-          <div style={{ fontSize: 11, letterSpacing: 3, color: MUTED, marginTop: 2 }}>{isInvoice ? "INVOICE" : "QUOTATION"}</div>
+          <div style={{ fontSize: 11, letterSpacing: 3, color: MUTED, marginTop: 8, lineHeight: 1 }}>{isInvoice ? "INVOICE" : "QUOTATION"}</div>
           <div dir="ltr" style={{ marginTop: 10, display: "inline-block", background: soft, borderRadius: 999, padding: "4px 12px", fontWeight: 700, fontSize: 13 }}>
             {doc.number || (isInvoice ? "INV-—" : "QT-—")}
           </div>

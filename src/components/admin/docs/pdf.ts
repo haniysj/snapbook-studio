@@ -1,13 +1,31 @@
 // Client-only helpers: turn the rendered A4 page into a PDF, print it, or share it.
 import { PAGE_H, PAGE_W } from "./DocPage";
 
+import thmanyahUrl from "@/assets/fonts/thmanyah-serif-text-medium.woff2?url";
+
 let fontCss: Promise<string> | null = null;
+
+/** The tagline font isn't always picked up by html-to-image, so it is embedded explicitly. */
+async function thmanyahFace(): Promise<string> {
+  try {
+    const blob = await (await fetch(thmanyahUrl)).blob();
+    const data = await new Promise<string>((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result));
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+    return `@font-face{font-family:"Thmanyah Serif Text";src:url(${data}) format("woff2");font-weight:500;font-style:normal;}`;
+  } catch {
+    return "";
+  }
+}
 
 async function renderCanvas(node: HTMLElement) {
   const { toCanvas, getFontEmbedCSS } = await import("html-to-image");
   await document.fonts?.ready;
   // Embed the site fonts once per session (Arabic shaping is done by the browser itself).
-  fontCss ??= getFontEmbedCSS(node).catch(() => "");
+  fontCss ??= Promise.all([getFontEmbedCSS(node).catch(() => ""), thmanyahFace()]).then((parts) => parts.join("\n"));
   const fontEmbedCSS = await fontCss;
   const opts = { pixelRatio: 2, backgroundColor: "#ffffff", fontEmbedCSS, width: PAGE_W, cacheBust: false };
   // first pass warms image/font caches (Safari sometimes skips images on the very first render)

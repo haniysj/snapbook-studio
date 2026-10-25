@@ -547,9 +547,9 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
           <Switch checked={v[lKey]} onCheckedChange={(c) => setV({ ...v, [lKey]: c })} />
         </label>
       </FormGroup>
-      <FormGroup label={ar ? "الرأس (تحت اسم المنصة)" : "Header (under the site name)"} footer={ar ? "الشعار واسم المنصة ورقم الواتساب تظهر تلقائياً. أضف هنا العنوان أو السجل التجاري مثلاً." : "Logo, site name and WhatsApp are added automatically. Add an address or CR number here."}>
+      <FormGroup label={ar ? "العبارة تحت اسم المنصة" : "Line under the site name"} footer={ar ? "تظهر بخط ثمانية بحروف مُرسلة، مثل: لخدمات التصوير." : "Shown in the Thmanyah font with elongated letters, e.g. photography services."}>
         <div className="px-4 py-2.5">
-          <textarea rows={2} className={cn(fieldCls, "resize-none leading-7")} value={v[hKey]} onChange={(e) => setV({ ...v, [hKey]: e.target.value })} placeholder={ar ? "مسقط، سلطنة عُمان · س.ت 1234567" : "Muscat, Sultanate of Oman · CR 1234567"} />
+          <textarea rows={2} className={cn(fieldCls, "resize-none leading-7")} value={v[hKey]} onChange={(e) => setV({ ...v, [hKey]: e.target.value })} placeholder="لخدمات التصوير" />
         </div>
       </FormGroup>
       <FormGroup label={ar ? "التذييل (أسفل الصفحة)" : "Footer (bottom of the page)"} footer={kind === "invoice" ? (ar ? "بيانات التحويل من الإعدادات تظهر في الفاتورة تلقائياً عند وجود مبلغ متبقٍ." : "Bank details from Settings are added to invoices automatically when a balance is due.") : undefined}>
