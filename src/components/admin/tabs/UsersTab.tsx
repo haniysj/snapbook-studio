@@ -19,7 +19,7 @@ function PinInput({ value, onChange, placeholder }: { value: string; onChange: (
       type="password"
       inputMode="numeric"
       pattern="[0-9]*"
-      maxLength={12}
+      maxLength={8}
       autoComplete="new-password"
       dir="ltr"
       value={value}
@@ -52,8 +52,8 @@ export function UsersTab() {
   const [editSuper, setEditSuper] = useState(false);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin_users"] });
-  const pinOk = (p: string) => /^\d{6,12}$/.test(p);
-  const pinMsg = ar ? "الرقم السري من 6 إلى 12 رقماً" : "PIN must be 6–12 digits";
+  const pinOk = (p: string) => /^\d{8}$/.test(p);
+  const pinMsg = ar ? "الرقم السري يجب أن يكون 8 أرقام" : "PIN must be 8 digits";
 
   const onCreate = async () => {
     if (name.trim().length < 2) return toast.error(ar ? "أدخل اسم المشرف" : "Enter a name");
@@ -95,8 +95,8 @@ export function UsersTab() {
         <h3 className="flex items-center gap-2 font-semibold"><Plus className="h-4 w-4 text-muted-foreground" /> {ar ? "إضافة مشرف" : "Add supervisor"}</h3>
         <p className="text-xs text-muted-foreground">
           {ar
-            ? "الدخول بالرقم السري فقط. لكل مشرف رقم سري خاص به (6–12 رقماً) ولا يتكرر."
-            : "Sign-in is by PIN only. Each supervisor has their own unique PIN (6–12 digits)."}
+            ? "الدخول بالرقم السري فقط. لكل مشرف رقم سري خاص به (8 أرقام) ولا يتكرر."
+            : "Sign-in is by PIN only. Each supervisor has their own unique PIN (8 digits)."}
         </p>
         <div className="grid gap-3 md:grid-cols-4">
           <div><Label>{ar ? "الاسم" : "Name"}</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>

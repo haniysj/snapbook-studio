@@ -54,8 +54,9 @@ function AdminPage() {
   );
 }
 
-const MIN = 6;
-const MAX = 12;
+const LEN = 8; // PINs are 8 digits
+const MIN = 6; // older shorter PINs can still press «دخول»
+const MAX = LEN;
 
 /** iPhone-style passcode entry: dots + keypad, also works with a physical keyboard. */
 function PinPad() {
@@ -82,7 +83,12 @@ function PinPad() {
     }
   }, [busy, ar]);
 
-  const press = (d: string) => setPin((p) => (p.length >= MAX ? p : p + d));
+  const press = (d: string) => {
+    if (pin.length >= MAX || busy) return;
+    const next = pin + d;
+    setPin(next);
+    if (next.length === LEN) submit(next); // sign in automatically on the 8th digit
+  };
   const back = () => setPin((p) => p.slice(0, -1));
 
   useEffect(() => {
@@ -95,7 +101,7 @@ function PinPad() {
     return () => window.removeEventListener("keydown", onKey);
   }, [pin, submit]);
 
-  const dots = Math.max(MIN, pin.length);
+  const dots = LEN;
 
   return (
     <div className="mx-auto flex max-w-xs flex-col items-center px-6 pb-10 pt-8">
@@ -103,12 +109,12 @@ function PinPad() {
       <h1 className="mt-5 text-lg font-bold">{ar ? "أدخل الرقم السري" : "Enter PIN"}</h1>
       <p className="mt-1 text-center text-xs text-muted-foreground">{ar ? "للدخول إلى لوحة التحكم" : "to open the dashboard"}</p>
 
-      <div className={cn("mt-6 flex h-4 items-center gap-3.5", shake && "animate-[shake_.4s_ease]")} dir="ltr" aria-live="polite">
+      <div className={cn("mt-6 flex h-4 items-center gap-3", shake && "animate-[shake_.4s_ease]")} dir="ltr" aria-live="polite">
         {Array.from({ length: dots }).map((_, i) => (
           <span
             key={i}
             className={cn(
-              "h-3.5 w-3.5 rounded-full border-[1.5px] border-foreground transition-colors",
+              "h-3 w-3 rounded-full border-[1.5px] border-foreground transition-colors",
               i < pin.length && "bg-foreground",
             )}
           />

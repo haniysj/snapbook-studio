@@ -98,8 +98,9 @@ export async function requireSuper(): Promise<AdminUser> {
 /* ---------------- PINs ---------------- */
 export const PIN_RE = /^\d{6,12}$/;
 
+export const NEW_PIN_RE = /^\d{8}$/; // new/changed PINs: exactly 8 digits
 export function checkPinFormat(pin: string) {
-  if (!PIN_RE.test(String(pin ?? ""))) throw new Error("PIN must be 6–12 digits");
+  if (!NEW_PIN_RE.test(String(pin ?? ""))) throw new Error("PIN must be 8 digits");
 }
 
 /** Throws if another account already uses this PIN (PINs identify the account, so they must be unique). */
