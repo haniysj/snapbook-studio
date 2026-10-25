@@ -228,18 +228,22 @@ function DocViewer({
   const [tapToShare, setTapToShare] = useState(false);
   useEffect(() => setTapToShare(false), [pdfKey]);
 
-  const shareBlob = async (blob: Blob) => {
-    const r = await sharePdf(blob, filename, title);
-    if (r === "unsupported") {
-      downloadBlob(blob, filename);
-      toast.message(ar ? "المشاركة غير مدعومة في هذا المتصفح، تم تحميل الملف بدلاً منها" : "Sharing isn't supported here, so the file was downloaded");
-    }
-    setTapToShare(r === "blocked");
+  const shareBlob = async (blob: Blob, secondTry: boolean) => {
+    const r = await sharePdf(blob, filename);
+    if (r.status === "ok") { setTapToShare(false); return; }
+    if (r.status === "blocked" && !secondTry) { setTapToShare(true); return; } // one fresh tap, then fall back
+    // This browser won't open the share sheet: give the file so it can be shared from Files/Downloads.
+    setTapToShare(false);
+    downloadBlob(blob, filename);
+    toast.message(
+      ar ? "تعذّر فتح نافذة المشاركة في هذا المتصفح، فتم تحميل الملف. شاركه من التنزيلات أو الملفات." : "This browser wouldn't open the share sheet, so the file was downloaded. Share it from Downloads/Files.",
+      { description: r.detail, duration: 12000 },
+    );
   };
 
   const share = () => {
     const ready = pdf.current?.key === pdfKey ? pdf.current.blob : null;
-    if (ready) { shareBlob(ready).catch((e) => toast.error(e?.message ?? String(e))); return; }
+    if (ready) { shareBlob(ready, tapToShare).catch((e) => toast.error(e?.message ?? String(e))); return; }
     run("share", async () => { await getPdf().promise; setTapToShare(true); });
   };
   const print = () => run("print", () => printNode(page.current!));
@@ -263,7 +267,7 @@ function DocViewer({
   };
 
   const Action = ({ k, onClick, icon, label, tone }: { k: string; onClick: () => void; icon: React.ReactNode; label: string; tone?: string }) => (
-    <button type="button" onClick={onClick} disabled={!!busy} className={cn("tap flex flex-col items-center gap-1 rounded-2xl bg-fill px-2 py-2.5 text-[12px] font-bold disabled:opacity-60", tone)}>
+    <button type="button" data-vaul-no-drag onClick={onClick} disabled={!!busy} className={cn("tap flex flex-col items-center gap-1 rounded-2xl bg-fill px-2 py-2.5 text-[12px] font-bold disabled:opacity-60", tone)}>
       {busy === k ? <Loader2 className="h-6 w-6 animate-spin" /> : icon}
       {label}
     </button>

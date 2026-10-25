@@ -49,22 +49,21 @@ export function downloadBlob(blob: Blob, filename: string) {
 
 /**
  * Share the PDF through the phone's share sheet (WhatsApp, Mail…).
- * Must be called straight from a tap with the blob already built — browsers refuse
- * (NotAllowedError "Permission denied") when the tap is followed by a slow PDF render.
- * Returns "unsupported", "blocked" (needs a fresh tap), or "ok".
+ * Called straight from a tap with the blob already built. Only `files` is passed:
+ * some phones refuse a share that mixes files with a title/text.
  */
-export async function sharePdf(blob: Blob, filename: string, title: string): Promise<"ok" | "unsupported" | "blocked"> {
-  const file = new File([blob], filename, { type: "application/pdf" });
+export async function sharePdf(blob: Blob, filename: string): Promise<{ status: "ok" | "unsupported" | "blocked"; detail?: string }> {
+  const file = new File([blob], filename, { type: "application/pdf", lastModified: Date.now() });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-  if (!nav.share || !nav.canShare?.({ files: [file] })) return "unsupported";
+  if (typeof nav.share !== "function") return { status: "unsupported", detail: "no navigator.share" };
+  if (nav.canShare && !nav.canShare({ files: [file] })) return { status: "unsupported", detail: "canShare(files) = false" };
   try {
-    await nav.share({ files: [file], title });
+    await nav.share({ files: [file] });
+    return { status: "ok" };
   } catch (e: any) {
-    if (e?.name === "AbortError") return "ok";
-    if (e?.name === "NotAllowedError") return "blocked";
-    throw e;
+    if (e?.name === "AbortError") return { status: "ok" };
+    return { status: "blocked", detail: `${e?.name ?? "Error"}: ${e?.message ?? e}` };
   }
-  return "ok";
 }
 
 /** Print the page exactly as rendered, via a hidden iframe (A4, no margins). */
