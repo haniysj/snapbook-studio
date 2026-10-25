@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightLeft, ChevronLeft, ChevronRight, FileText, Loader2, PanelsTopLeft, Pencil, Plus, Search, Share2, Trash2, X } from "lucide-react";
+import { ArrowRightLeft, ChevronLeft, ChevronRight, FileText, Loader2, PanelsTopLeft, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, useSettings } from "@/lib/app-context";
@@ -8,8 +8,8 @@ import { SegmentedControl } from "@/components/ui/segmented";
 import { IosSheet, FormGroup, FormRow, fieldCls } from "@/components/admin/IosSheet";
 import { Currency } from "@/components/site/Currency";
 import { DocPage, PAGE_W } from "@/components/admin/docs/DocPage";
-import { PdfIcon, PrintIcon } from "@/components/admin/docs/FileIcons";
-import { downloadBlob, makePdf, printNode, sharePdf } from "@/components/admin/docs/pdf";
+import { PdfIcon } from "@/components/admin/docs/FileIcons";
+import { downloadBlob, makePdf } from "@/components/admin/docs/pdf";
 import { deleteDoc, listApprovers, listDocs, saveDoc } from "@/lib/docs.functions";
 import { docTotals, emptyDoc, invoiceState, money, todayKey, type Approver, type Doc, type DocKind } from "@/lib/documents";
 import { cn } from "@/lib/utils";
@@ -200,8 +200,7 @@ function DocViewer({
     try { await fn(); } catch (e: any) { toast.error(e?.message ?? String(e)); } finally { setBusy(null); }
   };
 
-  // Build the PDF in the background as soon as the document is shown, so "Share" can open
-  // the share sheet directly from the tap (a slow render before share() = "Permission denied").
+  // Build the PDF in the background as soon as the document is shown, so "PDF" downloads instantly.
   const pdf = useRef<{ key: string; promise: Promise<Blob>; blob: Blob | null } | null>(null);
   const pdfKey = row ? JSON.stringify(row) : "";
   const getPdf = () => {
@@ -223,30 +222,6 @@ function DocViewer({
     toast.success(ar ? "تم تحميل ملف PDF" : "PDF downloaded");
   });
 
-  // When the file wasn't ready at the tap, the Share button turns into "tap to share":
-  // the browser only opens the share sheet straight from a tap.
-  const [tapToShare, setTapToShare] = useState(false);
-  useEffect(() => setTapToShare(false), [pdfKey]);
-
-  const shareBlob = async (blob: Blob, secondTry: boolean) => {
-    const r = await sharePdf(blob, filename);
-    if (r.status === "ok") { setTapToShare(false); return; }
-    if (r.status === "blocked" && !secondTry) { setTapToShare(true); return; } // one fresh tap, then fall back
-    // This browser won't open the share sheet: give the file so it can be shared from Files/Downloads.
-    setTapToShare(false);
-    downloadBlob(blob, filename);
-    toast.message(
-      ar ? "تعذّر فتح نافذة المشاركة في هذا المتصفح، فتم تحميل الملف. شاركه من التنزيلات أو الملفات." : "This browser wouldn't open the share sheet, so the file was downloaded. Share it from Downloads/Files.",
-      { description: r.detail, duration: 12000 },
-    );
-  };
-
-  const share = () => {
-    const ready = pdf.current?.key === pdfKey ? pdf.current.blob : null;
-    if (ready) { shareBlob(ready, tapToShare).catch((e) => toast.error(e?.message ?? String(e))); return; }
-    run("share", async () => { await getPdf().promise; setTapToShare(true); });
-  };
-  const print = () => run("print", () => printNode(page.current!));
 
   const setStatus = (status: string) => run("status", async () => {
     if (!row) return;
@@ -267,8 +242,8 @@ function DocViewer({
   };
 
   const Action = ({ k, onClick, icon, label, tone }: { k: string; onClick: () => void; icon: React.ReactNode; label: string; tone?: string }) => (
-    <button type="button" data-vaul-no-drag onClick={onClick} disabled={!!busy} className={cn("tap flex flex-col items-center gap-1 rounded-2xl bg-fill px-2 py-2.5 text-[12px] font-bold disabled:opacity-60", tone)}>
-      {busy === k ? <Loader2 className="h-6 w-6 animate-spin" /> : icon}
+    <button type="button" data-vaul-no-drag onClick={onClick} disabled={!!busy} className={cn("tap flex h-12 items-center justify-center gap-2 rounded-2xl bg-fill px-3 text-[14px] font-bold disabled:opacity-60", tone)}>
+      {busy === k ? <Loader2 className="h-5 w-5 animate-spin" /> : icon}
       {label}
     </button>
   );
@@ -277,17 +252,9 @@ function DocViewer({
     <IosSheet open={!!row} onOpenChange={(v) => !v && onClose()} title={title}>
       {row && (
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Action k="pdf" onClick={download} icon={<PdfIcon className="h-6 w-6" />} label={ar ? "تحميل PDF" : "PDF"} />
-            <Action k="print" onClick={print} icon={<PrintIcon className="h-6 w-6" />} label={ar ? "طباعة" : "Print"} />
-            <Action
-              k="share"
-              onClick={share}
-              icon={<Share2 className={cn("h-6 w-6", tapToShare ? "text-white" : "text-ios-blue")} />}
-              label={tapToShare ? (ar ? "اضغط للمشاركة" : "Tap to share") : ar ? "مشاركة" : "Share"}
-              tone={tapToShare ? "bg-ios-blue text-white animate-pulse" : undefined}
-            />
-            <Action k="edit" onClick={() => onEdit(row)} icon={<Pencil className="h-6 w-6" />} label={ar ? "تعديل" : "Edit"} />
+            <Action k="edit" onClick={() => onEdit(row)} icon={<Pencil className="h-5 w-5" />} label={ar ? "تعديل" : "Edit"} />
           </div>
 
           {!isInvoice && (
