@@ -33,11 +33,12 @@ export function IosSheet({
           className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] max-w-xl flex-col rounded-t-[1.4rem] bg-background outline-none"
         >
           <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
-          <div className="hairline-b grid shrink-0 grid-cols-[1fr_auto_1fr] items-center px-4 py-2.5">
+          {/* fixed physical order: Cancel on the left, Save on the right (also in Arabic) */}
+          <div dir="ltr" className="hairline-b grid shrink-0 grid-cols-[1fr_auto_1fr] items-center px-4 py-2.5">
             <button type="button" onClick={() => onOpenChange(false)} className="justify-self-start text-[15px] text-ios-blue">
               {ar ? "إلغاء" : "Cancel"}
             </button>
-            <DrawerPrimitive.Title className="text-[16px] font-bold">{title}</DrawerPrimitive.Title>
+            <DrawerPrimitive.Title dir={ar ? "rtl" : "ltr"} className="text-[16px] font-bold">{title}</DrawerPrimitive.Title>
             {onSave ? (
               <button
                 type="button"

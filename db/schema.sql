@@ -162,3 +162,7 @@ alter table seven.documents add column if not exists approver_signature text not
 -- ===== v5: official letterhead background (public/brand/letterhead-a4.jpg) per document type =====
 alter table seven.settings add column if not exists quote_letterhead boolean not null default true;
 alter table seven.settings add column if not exists invoice_letterhead boolean not null default false;
+
+-- ===== v6: photography service type on bookings (chosen from the gallery categories) =====
+alter table seven.bookings add column if not exists service_type text not null default '';
+alter table seven.settings alter column invoice_letterhead set default true;

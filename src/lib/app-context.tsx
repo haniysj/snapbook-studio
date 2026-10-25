@@ -45,7 +45,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   quote_footer: "",
   quote_contact_link: "sevenn.om",
   quote_letterhead: true,
-  invoice_letterhead: false,
+  invoice_letterhead: true,
 };
 
 
@@ -108,7 +108,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         quote_footer: (data as any).quote_footer ?? "",
         quote_contact_link: (data as any).quote_contact_link ?? "sevenn.om",
         quote_letterhead: (data as any).quote_letterhead ?? true,
-        invoice_letterhead: (data as any).invoice_letterhead ?? false,
+        invoice_letterhead: (data as any).invoice_letterhead ?? true,
       });
       setSettingsLoaded(true);
     }

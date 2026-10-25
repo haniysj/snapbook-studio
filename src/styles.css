@@ -12,6 +12,8 @@
    (ثمانية — free for websites & apps, font.thmanyah.com; same file as the mosque display) */
 @import "@fontsource-variable/cairo/wght.css";
 @font-face { font-family: "Thmanyah Serif Text"; src: url("./assets/fonts/thmanyah-serif-text-medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+/* Arabic-only face: Arabic letters in Thmanyah, digits & Latin fall through to Cairo */
+@font-face { font-family: "Thmanyah Arabic"; src: url("./assets/fonts/thmanyah-serif-text-medium.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; }
 
 @custom-variant dark (&:is(.dark *));
 

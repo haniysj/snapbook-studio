@@ -46,7 +46,7 @@ export const TABLES: Record<string, TableDef> = {
   bookings: {
     cols: {
       id: "uuid", customer_name: "text", phone: "text", event_location_url: "text", event_date: "date",
-      event_time: "time", package_id: "uuid", status: "enum", notes: "text", created_at: "ts", updated_at: "ts",
+      event_time: "time", package_id: "uuid", status: "enum", notes: "text", service_type: "text", created_at: "ts", updated_at: "ts",
     },
     publicInsert: true,
   },

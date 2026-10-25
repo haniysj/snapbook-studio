@@ -29,8 +29,8 @@ function BookingConfirmed() {
 
   const msg = summary
     ? ar
-      ? `طلب حجز جديد ${ref}\n\nالاسم: ${summary.name}\nالهاتف: ${summary.phone}\nالتاريخ: ${summary.date}\nالوقت: ${summary.time}\nالباقة: ${summary.pkg}${summary.location ? `\nالموقع: ${summary.location}` : ""}${summary.notes ? `\nملاحظات: ${summary.notes}` : ""}\n\nمرفق إيصال الدفعة المقدمة.`
-      : `New booking request ${ref}\n\nName: ${summary.name}\nPhone: ${summary.phone}\nDate: ${summary.date}\nTime: ${summary.time}\nPackage: ${summary.pkg}${summary.location ? `\nLocation: ${summary.location}` : ""}${summary.notes ? `\nNotes: ${summary.notes}` : ""}\n\nAdvance payment receipt attached.`
+      ? `طلب حجز جديد ${ref}\n\nالاسم: ${summary.name}\nالهاتف: ${summary.phone}\nالتاريخ: ${summary.date}\nالوقت: ${summary.time}${summary.service ? `\nنوع التصوير: ${summary.service}` : ""}\nالباقة: ${summary.pkg}${summary.location ? `\nالموقع: ${summary.location}` : ""}${summary.notes ? `\nملاحظات: ${summary.notes}` : ""}\n\nمرفق إيصال الدفعة المقدمة.`
+      : `New booking request ${ref}\n\nName: ${summary.name}\nPhone: ${summary.phone}\nDate: ${summary.date}\nTime: ${summary.time}${summary.service ? `\nPhotography: ${summary.service}` : ""}\nPackage: ${summary.pkg}${summary.location ? `\nLocation: ${summary.location}` : ""}${summary.notes ? `\nNotes: ${summary.notes}` : ""}\n\nAdvance payment receipt attached.`
     : ar
       ? `مرحباً، أرسلت طلب حجز برقم ${ref}. مرفق إيصال الدفعة المقدمة.`
       : `Hi, I sent booking request ${ref}. Advance payment receipt attached.`;

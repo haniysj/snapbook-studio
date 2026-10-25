@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Currency } from "@/components/site/Currency";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, MapPin, MessageSquareText, Phone, Search, Trash2, X } from "lucide-react";
+import { Check, Clock, MapPin, MessageSquareText, Phone, Search, Trash2, X, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, useSettings } from "@/lib/app-context";
@@ -83,7 +83,7 @@ export function BookingsTab() {
     const pkg = p ? (ar ? p.name_ar : p.name_en || p.name_ar) : "";
     const ref = `#${b.id.slice(0, 8).toUpperCase()}`;
     return ar
-      ? `مرحباً ${b.customer_name}،\nتم تأكيد حجزك ${ref} لدى ${settings.site_name} ✅\n\nالتاريخ: ${b.event_date}\nالوقت: ${b.event_time?.slice(0, 5) ?? ""}\nالباقة: ${pkg}${b.event_location_url ? `\nالموقع: ${b.event_location_url}` : ""}\n\nشكراً لثقتك بنا.`
+      ? `مرحباً ${b.customer_name}،\nتم تأكيد حجزك ${ref} لدى ${settings.site_name} ✅\n\nالتاريخ: ${b.event_date}\nالوقت: ${b.event_time?.slice(0, 5) ?? ""}${b.service_type ? `\nنوع التصوير: ${b.service_type}` : ""}\nالباقة: ${pkg}${b.event_location_url ? `\nالموقع: ${b.event_location_url}` : ""}\n\nشكراً لثقتك بنا.`
       : `Hello ${b.customer_name},\nYour booking ${ref} with ${settings.site_name} is confirmed ✅\n\nDate: ${b.event_date}\nTime: ${b.event_time?.slice(0, 5) ?? ""}\nPackage: ${pkg}${b.event_location_url ? `\nLocation: ${b.event_location_url}` : ""}\n\nThank you for choosing us.`;
   };
 
@@ -148,6 +148,11 @@ export function BookingsTab() {
                       <a href={`tel:${b.phone}`} className="inline-flex items-center gap-1 whitespace-nowrap text-ios-blue" dir="ltr"><Phone className="h-3.5 w-3.5" />{b.phone}</a>
                       <span className="font-mono text-[11px]" dir="ltr">#{b.id.slice(0, 8).toUpperCase()}</span>
                     </div>
+                    {b.service_type && (
+                      <div className="mt-2 me-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/12 px-2.5 py-0.5 text-[12px] font-bold text-primary">
+                        <Camera className="h-3.5 w-3.5" />{ar ? `تصوير ${b.service_type}` : b.service_type}
+                      </div>
+                    )}
                     {p && (
                       <div className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-fill px-2.5 py-0.5 text-[12px] font-semibold">
                         <span className="truncate">{ar ? p.name_ar : p.name_en || p.name_ar}</span>

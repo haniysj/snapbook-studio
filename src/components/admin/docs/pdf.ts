@@ -15,7 +15,10 @@ async function thmanyahFace(): Promise<string> {
       r.onerror = rej;
       r.readAsDataURL(blob);
     });
-    return `@font-face{font-family:"Thmanyah Serif Text";src:url(${data}) format("woff2");font-weight:500;font-style:normal;}`;
+    return [
+      `@font-face{font-family:"Thmanyah Serif Text";src:url(${data}) format("woff2");font-weight:500;font-style:normal;}`,
+      `@font-face{font-family:"Thmanyah Arabic";src:url(${data}) format("woff2");font-weight:100 900;font-style:normal;unicode-range:U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200F;}`,
+    ].join("\n");
   } catch {
     return "";
   }

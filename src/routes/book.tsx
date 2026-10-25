@@ -4,7 +4,8 @@ import { z } from "zod";
 import { useState, type ReactNode } from "react";
 import { ar as arLocale, enUS } from "date-fns/locale";
 import { format } from "date-fns";
-import { CalendarDays, Check, Clock, Loader2, MapPin, Phone, StickyNote, UserRound } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CalendarDays, Camera, Check, Clock, Loader2, MapPin, Phone, StickyNote, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/book")({
 
 export type BookingSummary = {
   id: string; name: string; phone: string; date: string; time: string; pkg: string; location: string; notes: string;
+  service?: string;
 };
 
 function BookPage() {
@@ -36,6 +38,13 @@ function BookPage() {
   const { date: initialDate, package_id: initialPkg } = Route.useSearch();
   const bookedDates = useBookedDates();
   const { data: packages = [] } = usePackages();
+  // Photography service types = the gallery sections (ملكة، مناسبات، تخرج…), so a new section shows up here too.
+  const { data: services = [] } = useQuery({
+    queryKey: ["gallery_categories"],
+    queryFn: async () =>
+      ((await supabase.from("gallery_categories").select("*").order("sort_order")).data ?? []) as { id: string; name_ar: string; name_en: string | null }[],
+  });
+  const [service, setService] = useState("");
 
   const [date, setDate] = useState<Date | undefined>(initialDate ? toDate(initialDate) : undefined);
   const [pickingDate, setPickingDate] = useState(!initialDate);
@@ -53,6 +62,7 @@ function BookPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!date || dateIsBooked) { setPickingDate(true); return toast.error(t(lang, "choose_date_first")); }
+    if (services.length && !service) return toast.error(ar ? "اختر نوع التصوير" : "Choose the type of photography");
     if (!pkg) return toast.error(t(lang, "select_package"));
     if (name.trim().length < 2) return toast.error(ar ? "اكتب الاسم" : "Enter your name");
     const digits = phone.replace(/\D/g, "");
@@ -69,6 +79,7 @@ function BookPage() {
       event_time: time,
       package_id: pkg,
       notes: notes.trim(),
+      service_type: service,
       status: "pending",
     });
     setSubmitting(false);
@@ -78,6 +89,7 @@ function BookPage() {
     const summary: BookingSummary = {
       id, name: name.trim(), phone: phone.trim(), date: toKey(date), time, location: location.trim(), notes: notes.trim(),
       pkg: chosen ? (ar ? chosen.name_ar : chosen.name_en || chosen.name_ar) : "",
+      service,
     };
     try { sessionStorage.setItem(`booking:${id}`, JSON.stringify(summary)); } catch { /* ignore */ }
     navigate({ to: "/booking-confirmed/$id", params: { id } });
@@ -88,7 +100,7 @@ function BookPage() {
       <form onSubmit={onSubmit} className="mx-auto max-w-xl space-y-6 px-4 pb-10 pt-6">
         <div className="px-1">
           <h1 className="large-title">{t(lang, "book_now")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{ar ? "ثلاث خطوات بسيطة ونتواصل معك." : "Three quick steps and we'll be in touch."}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{ar ? "خطوات بسيطة ونتواصل معك." : "A few quick steps and we'll be in touch."}</p>
         </div>
 
         {/* 1. Date & time */}
@@ -123,8 +135,34 @@ function BookPage() {
         </Group>
         {dateIsBooked && <p className="-mt-4 px-4 text-sm font-semibold text-ios-red">{t(lang, "date_taken")}</p>}
 
-        {/* 2. Package */}
-        <Group label={ar ? "٢. الباقة" : "2. Package"}>
+        {/* 2. Service type */}
+        {services.length > 0 && (
+          <Group label={ar ? "٢. نوع التصوير" : "2. Type of photography"}>
+            <div className="flex flex-wrap gap-2 px-4 py-3">
+              {services.map((c) => {
+                const active = service === c.name_ar;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setService(c.name_ar)}
+                    aria-pressed={active}
+                    className={cn(
+                      "tap inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold transition",
+                      active ? "bg-primary text-primary-foreground" : "bg-fill",
+                    )}
+                  >
+                    {active ? <Check className="h-4 w-4" strokeWidth={3} /> : <Camera className="h-4 w-4 opacity-60" />}
+                    {ar ? c.name_ar : c.name_en || c.name_ar}
+                  </button>
+                );
+              })}
+            </div>
+          </Group>
+        )}
+
+        {/* 3. Package */}
+        <Group label={services.length ? (ar ? "٣. الباقة" : "3. Package") : ar ? "٢. الباقة" : "2. Package"}>
           {packages.length === 0 && <div className="ios-row text-sm text-muted-foreground">{t(lang, "loading")}</div>}
           {packages.map((p) => {
             const active = pkg === p.id;
@@ -161,7 +199,7 @@ function BookPage() {
         </Group>
 
         {/* 3. Details */}
-        <Group label={ar ? "٣. بياناتك" : "3. Your details"}>
+        <Group label={services.length ? (ar ? "٤. بياناتك" : "4. Your details") : ar ? "٣. بياناتك" : "3. Your details"}>
           <Field icon={<UserRound className="h-[17px] w-[17px]" />} tint="bg-ios-blue">
             <input
               value={name}
@@ -199,7 +237,7 @@ function BookPage() {
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={t(lang, "form_notes")}
+              placeholder={ar ? "ملاحظات: مكان الحفل، تفاصيل تهمّنا… (اختياري)" : "Notes: venue, anything we should know… (optional)"}
               rows={2}
               className="w-full resize-none bg-transparent py-1 outline-none placeholder:text-muted-foreground"
             />

@@ -317,8 +317,8 @@ function DocEditor({ doc, myId, onClose, onSaved }: { doc: Doc | null; myId: str
   }, [doc, approversReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: bookings = [] } = useQuery({
-    queryKey: ["admin_bookings"],
-    queryFn: async () => (await supabase.from("bookings").select("*, packages(name_ar, name_en, price, currency)").order("created_at", { ascending: false })).data ?? [],
+    queryKey: ["admin_bookings_docs"],
+    queryFn: async () => (await supabase.from("bookings").select("*, packages(name_ar, name_en, description_ar, price, currency)").order("created_at", { ascending: false })).data ?? [],
     enabled: !!doc,
   });
 
@@ -337,7 +337,7 @@ function DocEditor({ doc, myId, onClose, onSaved }: { doc: Doc | null; myId: str
       customer_name: b.customer_name,
       customer_phone: b.phone ?? "",
       event_date: b.event_date,
-      items: p ? [{ desc: `${p.name_ar}${b.event_time ? ` — ${ar ? "الساعة" : "at"} ${String(b.event_time).slice(0, 5)}` : ""}`, qty: 1, price: Number(p.price) || 0 }] : d.items,
+      items: p || b.service_type ? [{ desc: bookingDesc(b), qty: 1, price: Number(p?.price) || 0 }] : d.items,
     });
   };
 
@@ -395,7 +395,7 @@ function DocEditor({ doc, myId, onClose, onSaved }: { doc: Doc | null; myId: str
             <div key={i} className="ios-group p-3">
               <div className="flex items-start gap-2">
                 <span className="mt-1.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-fill text-[12px] font-bold">{i + 1}</span>
-                <textarea rows={1} className={cn(fieldCls, "min-h-[34px] flex-1 resize-none rounded-lg bg-fill px-2.5 py-1.5")} value={it.desc} onChange={(e) => setItem(i, { desc: e.target.value })} placeholder={ar ? "وصف البند، مثال: تصوير حفل زفاف ٤ ساعات" : "Item description"} />
+                <textarea rows={Math.min(8, Math.max(1, it.desc.split("\n").length))} className={cn(fieldCls, "min-h-[34px] flex-1 resize-none rounded-lg bg-fill px-2.5 py-1.5 leading-6")} value={it.desc} onChange={(e) => setItem(i, { desc: e.target.value })} placeholder={ar ? "وصف البند، مثال: تصوير حفل زفاف ٤ ساعات" : "Item description"} />
                 {d.items.length > 1 && (
                   <button type="button" onClick={() => set({ items: d.items.filter((_, j) => j !== i) })} className="tap mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ios-red/10 text-ios-red" aria-label={ar ? "حذف البند" : "Remove item"}>
                     <X className="h-4 w-4" />
@@ -477,6 +477,24 @@ function DocEditor({ doc, myId, onClose, onSaved }: { doc: Doc | null; myId: str
   );
 }
 
+/**
+ * Item description from a booking:
+ *   تصوير ملكة — باقة الفضية
+ *   (package details)
+ *   الموعد: 18:00
+ *   ملاحظات الحجز: موقع الحفل في نادي الشفق
+ */
+function bookingDesc(b: any) {
+  const p = b.packages;
+  const head = [b.service_type ? `تصوير ${b.service_type}` : "", p?.name_ar ?? ""].filter(Boolean).join(" — ");
+  return [
+    head,
+    p?.description_ar?.trim(),
+    b.event_time ? `الموعد: ${String(b.event_time).slice(0, 5)}` : "",
+    b.notes?.trim() ? `ملاحظات الحجز: ${b.notes.trim()}` : "",
+  ].filter(Boolean).join("\n");
+}
+
 const withApprover = (d: Doc, a: Approver): Doc => ({
   ...d, approver_id: a.id, approver_name: a.contact_name, approver_phone: a.contact_phone, approver_signature: a.signature,
 });
@@ -487,7 +505,7 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
   const ar = lang === "ar";
   const { settings, refresh } = useSettings();
   const [kind, setKind] = useState<DocKind>(initialKind);
-  const [v, setV] = useState({ invoice_header: "", invoice_footer: "", quote_header: "", quote_footer: "", quote_contact_link: "", quote_letterhead: true, invoice_letterhead: false });
+  const [v, setV] = useState({ invoice_header: "", invoice_footer: "", quote_header: "", quote_footer: "", quote_contact_link: "", quote_letterhead: true, invoice_letterhead: true });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {

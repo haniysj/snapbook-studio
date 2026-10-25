@@ -111,7 +111,7 @@ export const DocPage = forwardRef<HTMLDivElement, { doc: Doc; settings: SiteSett
         minHeight: PAGE_H,
         background: "#ffffff",
         color: INK,
-        fontFamily: '"Cairo Variable", "Cairo", system-ui, sans-serif',
+        fontFamily: '"Thmanyah Arabic", "Cairo Variable", "Cairo", system-ui, sans-serif',
         fontSize: 13,
         display: "flex",
         flexDirection: "column",

@@ -19,7 +19,7 @@ function clean(d: Doc) {
   if (name.length < 2) throw new Error("Customer name is required");
   const items = (Array.isArray(d.items) ? d.items : [])
     .map((i) => ({
-      desc: String(i?.desc ?? "").trim().slice(0, 300),
+      desc: String(i?.desc ?? "").trim().slice(0, 800),
       qty: Math.max(0, Math.min(100000, Number(i?.qty) || 0)),
       price: Math.max(0, Math.min(10_000_000, Number(i?.price) || 0)),
     }))
