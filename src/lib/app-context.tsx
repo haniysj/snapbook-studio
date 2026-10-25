@@ -26,6 +26,8 @@ export type SiteSettings = {
   quote_header: string;
   quote_footer: string;
   quote_contact_link: string;
+  quote_letterhead: boolean;
+  invoice_letterhead: boolean;
 };
 type SettingsCtx = { settings: SiteSettings; refresh: () => Promise<void> };
 const SettingsContext = createContext<SettingsCtx | null>(null);
@@ -42,6 +44,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   quote_header: "",
   quote_footer: "",
   quote_contact_link: "sevenn.om",
+  quote_letterhead: true,
+  invoice_letterhead: false,
 };
 
 
@@ -103,6 +107,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         quote_header: (data as any).quote_header ?? "",
         quote_footer: (data as any).quote_footer ?? "",
         quote_contact_link: (data as any).quote_contact_link ?? "sevenn.om",
+        quote_letterhead: (data as any).quote_letterhead ?? true,
+        invoice_letterhead: (data as any).invoice_letterhead ?? false,
       });
       setSettingsLoaded(true);
     }

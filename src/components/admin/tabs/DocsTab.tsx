@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, ChevronLeft, ChevronRight, FileText, Loader2, PanelsTopLeft, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useLang, useSettings } from "@/lib/app-context";
+import { useLang, useSettings, type SiteSettings } from "@/lib/app-context";
+import { Switch } from "@/components/ui/switch";
 import { SegmentedControl } from "@/components/ui/segmented";
 import { IosSheet, FormGroup, FormRow, fieldCls } from "@/components/admin/IosSheet";
 import { Currency } from "@/components/site/Currency";
@@ -486,17 +487,18 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
   const ar = lang === "ar";
   const { settings, refresh } = useSettings();
   const [kind, setKind] = useState<DocKind>(initialKind);
-  const [v, setV] = useState({ invoice_header: "", invoice_footer: "", quote_header: "", quote_footer: "", quote_contact_link: "" });
+  const [v, setV] = useState({ invoice_header: "", invoice_footer: "", quote_header: "", quote_footer: "", quote_contact_link: "", quote_letterhead: true, invoice_letterhead: false });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setKind(initialKind);
-    setV({ invoice_header: settings.invoice_header, invoice_footer: settings.invoice_footer, quote_header: settings.quote_header, quote_footer: settings.quote_footer, quote_contact_link: settings.quote_contact_link });
+    setV({ invoice_header: settings.invoice_header, invoice_footer: settings.invoice_footer, quote_header: settings.quote_header, quote_footer: settings.quote_footer, quote_contact_link: settings.quote_contact_link, quote_letterhead: settings.quote_letterhead, invoice_letterhead: settings.invoice_letterhead });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hKey = kind === "invoice" ? "invoice_header" : "quote_header";
   const fKey = kind === "invoice" ? "invoice_footer" : "quote_footer";
+  const lKey = kind === "invoice" ? "invoice_letterhead" : "quote_letterhead";
 
   const sample: Doc = {
     ...emptyDoc(kind),
@@ -531,6 +533,20 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
         onChange={setKind}
         options={[{ value: "invoice", label: ar ? "الفاتورة" : "Invoice" }, { value: "quote", label: ar ? "عرض السعر" : "Quotation" }]}
       />
+      <FormGroup
+        label={ar ? "الخلفية" : "Background"}
+        footer={v[lKey]
+          ? (ar ? "تُستخدم الخلفية الرسمية، والنصوص مرتّبة بعيداً عن زخارف الأعلى والأسفل. التذييل يظهر داخل الشريط السفلي." : "The official letterhead is used; text stays clear of the top and bottom artwork. The footer sits inside the bottom band.")
+          : (ar ? "التصميم العادي بشريط ملوّن بلون ثيم المنصة." : "Plain layout with the site theme colour bars.")}
+      >
+        <label className="ios-row cursor-pointer justify-between">
+          <span className="flex items-center gap-2.5">
+            <img src="/brand/letterhead-a4.jpg" alt="" className="h-11 w-8 rounded-[3px] object-cover ring-1 ring-black/10" />
+            <span className="font-semibold">{ar ? "استخدام الخلفية الرسمية" : "Use the official letterhead"}</span>
+          </span>
+          <Switch checked={v[lKey]} onCheckedChange={(c) => setV({ ...v, [lKey]: c })} />
+        </label>
+      </FormGroup>
       <FormGroup label={ar ? "الرأس (تحت اسم المنصة)" : "Header (under the site name)"} footer={ar ? "الشعار واسم المنصة ورقم الواتساب تظهر تلقائياً. أضف هنا العنوان أو السجل التجاري مثلاً." : "Logo, site name and WhatsApp are added automatically. Add an address or CR number here."}>
         <div className="px-4 py-2.5">
           <textarea rows={2} className={cn(fieldCls, "resize-none leading-7")} value={v[hKey]} onChange={(e) => setV({ ...v, [hKey]: e.target.value })} placeholder={ar ? "مسقط، سلطنة عُمان · س.ت 1234567" : "Muscat, Sultanate of Oman · CR 1234567"} />
@@ -555,7 +571,7 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
 }
 
 /** Preview that uses unsaved header/footer text. */
-function PreviewWithSettings({ doc, overrides }: { doc: Doc; overrides: Record<string, string> }) {
+function PreviewWithSettings({ doc, overrides }: { doc: Doc; overrides: Partial<SiteSettings> }) {
   const { settings } = useSettings();
   const box = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.45);

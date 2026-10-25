@@ -158,3 +158,7 @@ alter table seven.documents add column if not exists approver_id uuid references
 alter table seven.documents add column if not exists approver_name text not null default '';
 alter table seven.documents add column if not exists approver_phone text not null default '';
 alter table seven.documents add column if not exists approver_signature text not null default '';
+
+-- ===== v5: official letterhead background (public/brand/letterhead-a4.jpg) per document type =====
+alter table seven.settings add column if not exists quote_letterhead boolean not null default true;
+alter table seven.settings add column if not exists invoice_letterhead boolean not null default false;
