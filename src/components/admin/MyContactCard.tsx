@@ -212,9 +212,9 @@ export function MyContactCard() {
               <div className="min-w-0">
                 <div className="text-[13px] font-bold text-primary">للتواصل والاستفسار:</div>
                 <div className="mt-1 truncate text-[15px] font-bold">{name.trim() || "—"}</div>
-                <div dir="ltr" className="mt-0.5 whitespace-nowrap text-end text-[12.5px] text-neutral-500">
+                <div dir="rtl" className="mt-0.5 whitespace-nowrap text-[12.5px] text-neutral-500">
                   {[phone.trim(), settings.quote_contact_link].filter(Boolean).map((x, i) => (
-                    <span key={i}>{i > 0 && <span className="mx-2.5 text-neutral-300">|</span>}{x}</span>
+                    <span key={i}>{i > 0 && <span className="mx-2.5 text-neutral-300">|</span>}<bdi dir="ltr">{x}</bdi></span>
                   ))}
                 </div>
               </div>

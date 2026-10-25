@@ -210,9 +210,13 @@ export const DocPage = forwardRef<HTMLDivElement, { doc: Doc; settings: SiteSett
           <div style={{ minWidth: 0 }}>
             <div style={{ color: accent, fontSize: 13, fontWeight: 700 }}>للتواصل والاستفسار:</div>
             <div style={{ marginTop: 6, fontSize: 15, fontWeight: 700, lineHeight: 1.4 }}>{doc.approver_name}</div>
-            <div dir="ltr" style={{ marginTop: 4, color: MUTED, fontSize: 13, textAlign: "right", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
+            {/* RTL row: phone on the right, then the divider, then the link on the left */}
+            <div dir="rtl" style={{ marginTop: 4, color: MUTED, fontSize: 13, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
               {[doc.approver_phone, settings.quote_contact_link].filter(Boolean).map((x, i) => (
-                <span key={i}>{i > 0 && <span style={{ margin: "0 12px", color: "#b8bdc6" }}>|</span>}{x}</span>
+                <span key={i}>
+                  {i > 0 && <span style={{ margin: "0 12px", color: "#b8bdc6" }}>|</span>}
+                  <bdi dir="ltr">{x}</bdi>
+                </span>
               ))}
             </div>
           </div>
