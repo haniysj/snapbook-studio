@@ -141,7 +141,8 @@ function validatePublicBooking(v: Record<string, unknown>) {
   if (phone.length < 5 || phone.length > 30) throw new Error("Invalid phone");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today) throw new Error("Invalid date");
   if (v.status && v.status !== "pending") throw new Error("Invalid status");
-  return { ...v, customer_name: name, phone, status: "pending" };
+  const service_type = String(v.service_type ?? "").trim().slice(0, 60);
+  return { ...v, customer_name: name, phone, service_type, status: "pending" };
 }
 
 export async function runQuery(req: QueryReq) {
@@ -202,8 +203,9 @@ export async function runQuery(req: QueryReq) {
       );
       out.push(...rows);
     }
-    if (!admin && req.table === "bookings" && out[0]?.id) {
-      // Alert every supervisor's devices about the new booking.
+    if (req.table === "bookings" && out[0]?.id) {
+      // Alert every supervisor's devices about the new booking — also when the booking is made
+      // from a browser that happens to be signed in to the dashboard (e.g. testing on the same phone).
       const { notifyNewBooking } = await import("./push");
       await notifyNewBooking(String(out[0].id));
     }

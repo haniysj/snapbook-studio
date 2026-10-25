@@ -166,3 +166,6 @@ alter table seven.settings add column if not exists invoice_letterhead boolean n
 -- ===== v6: photography service type on bookings (chosen from the gallery categories) =====
 alter table seven.bookings add column if not exists service_type text not null default '';
 alter table seven.settings alter column invoice_letterhead set default true;
+
+-- ===== v7: day-before shoot reminder (sent once per booking by the daily cron) =====
+alter table seven.bookings add column if not exists reminder_sent_at timestamptz;
