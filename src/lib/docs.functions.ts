@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { Doc, DocKind } from "./documents";
+import type { Approver, Doc, DocKind } from "./documents";
 
 // Invoices & quotations. Any signed-in supervisor can create/edit; delete = creator or general supervisor.
 
@@ -8,6 +8,7 @@ const COLS = `id::text as id, kind, number, customer_name, customer_phone, custo
   event_date::text as event_date, items, discount::float8 as discount, vat_rate::float8 as vat_rate,
   paid::float8 as paid, total::float8 as total, notes, status, source_id::text as source_id,
   created_by::text as created_by, created_by_name,
+  approver_id::text as approver_id, approver_name, approver_phone, approver_signature,
   to_char(created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at`;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -46,6 +47,21 @@ function clean(d: Doc) {
   };
 }
 
+/** Resolves the approver snapshot (quotes only). Unknown/deleted approver on an edit keeps the old snapshot. */
+async function approverSnapshot(kind: DocKind, approverId: string | null | undefined) {
+  if (kind !== "quote" || !approverId) return { id: null, name: "", phone: "", signature: "" };
+  if (!/^[0-9a-f-]{36}$/i.test(approverId)) throw new Error("Invalid approver");
+  const { q, tbl } = await import("./server/db");
+  const rows = await q<{ id: string; contact_name: string; contact_phone: string; signature: string }>(
+    `select id::text as id, contact_name, contact_phone, signature from ${tbl("admin_users")} where id::text = $1`,
+    [approverId],
+  );
+  const a = rows[0];
+  // Deleted account or details cleared later: keep whatever the document already has.
+  if (!a || !a.contact_name.trim()) return null;
+  return { id: a.id, name: a.contact_name, phone: a.contact_phone, signature: a.signature };
+}
+
 async function nextNumber(kind: DocKind, issueDate: string) {
   const { q, tbl } = await import("./server/db");
   const prefix = `${kind === "invoice" ? "INV" : "QT"}-${issueDate.slice(0, 4)}-`;
@@ -78,6 +94,7 @@ export const saveDoc = createServerFn({ method: "POST" })
     const me = await requireAdmin();
     const c = clean(data);
     const total = docTotals(c).total;
+    const ap = await approverSnapshot(c.kind, data.approver_id);
     const vals = [c.customer_name, c.customer_phone, c.customer_extra, c.booking_id, c.issue_date, c.due_date,
       c.event_date, JSON.stringify(c.items), c.discount, c.vat_rate, c.paid, total, c.notes, c.status];
 
@@ -90,7 +107,13 @@ export const saveDoc = createServerFn({ method: "POST" })
         [...vals, data.id],
       );
       if (!rows[0]) throw new Error("Document not found");
-      return rows[0];
+      if (!ap) return rows[0];
+      const upd = await q<Doc>(
+        `update ${tbl("documents")} set approver_id=$1, approver_name=$2, approver_phone=$3, approver_signature=$4
+          where id::text = $5 returning ${COLS}`,
+        [ap.id, ap.name, ap.phone, ap.signature, data.id],
+      );
+      return upd[0];
     }
 
     // New document: allocate the next number (retry if two people save at the same moment).
@@ -100,9 +123,10 @@ export const saveDoc = createServerFn({ method: "POST" })
         const rows = await q<Doc>(
           `insert into ${tbl("documents")} (customer_name, customer_phone, customer_extra, booking_id, issue_date,
               due_date, event_date, items, discount, vat_rate, paid, total, notes, status, kind, number,
-              source_id, created_by, created_by_name)
-            values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) returning ${COLS}`,
-          [...vals, c.kind, number, data.source_id && /^[0-9a-f-]{36}$/i.test(data.source_id) ? data.source_id : null, me.id, me.display_name],
+              source_id, created_by, created_by_name, approver_id, approver_name, approver_phone, approver_signature)
+            values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) returning ${COLS}`,
+          [...vals, c.kind, number, data.source_id && /^[0-9a-f-]{36}$/i.test(data.source_id) ? data.source_id : null, me.id, me.display_name,
+            ap?.id ?? null, ap?.name ?? "", ap?.phone ?? "", ap?.signature ?? ""],
         );
         return rows[0];
       } catch (e: any) {
@@ -125,5 +149,46 @@ export const deleteDoc = createServerFn({ method: "POST" })
     if (!rows[0]) return { ok: true };
     if (!me.is_super && rows[0].created_by !== me.id) throw new Error("Only the creator or the general supervisor can delete this");
     await q(`delete from ${tbl("documents")} where id::text = $1`, [data.id]);
+    return { ok: true };
+  });
+
+/** Supervisors who filled in their contact name — the choices for "approved by". */
+export const listApprovers = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("./server/session");
+  const { q, tbl } = await import("./server/db");
+  await requireAdmin();
+  return await q<Approver>(
+    `select id::text as id, contact_name, contact_phone, signature from ${tbl("admin_users")}
+      where contact_name <> '' order by is_super desc, created_at`,
+  );
+});
+
+/** The signed-in supervisor's own contact details + signature. */
+export const getMyContact = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("./server/session");
+  const { q, tbl } = await import("./server/db");
+  const me = await requireAdmin();
+  const rows = await q<Approver>(
+    `select id::text as id, contact_name, contact_phone, signature from ${tbl("admin_users")} where id::text = $1`,
+    [me.id],
+  );
+  return rows[0];
+});
+
+export const saveMyContact = createServerFn({ method: "POST" })
+  .inputValidator((d: { contact_name: string; contact_phone: string; signature: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./server/session");
+    const { q, tbl } = await import("./server/db");
+    const me = await requireAdmin();
+    const name = String(data.contact_name ?? "").trim().slice(0, 80);
+    const phone = String(data.contact_phone ?? "").trim().slice(0, 40);
+    const sig = String(data.signature ?? "");
+    if (sig && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(sig)) throw new Error("Invalid signature image");
+    if (sig.length > 400_000) throw new Error("Signature image is too large");
+    await q(
+      `update ${tbl("admin_users")} set contact_name=$1, contact_phone=$2, signature=$3, updated_at=now() where id::text = $4`,
+      [name, phone, sig, me.id],
+    );
     return { ok: true };
   });

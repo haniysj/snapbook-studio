@@ -147,3 +147,14 @@ create table if not exists seven.documents (
   updated_at timestamptz not null default now()
 );
 create index if not exists documents_kind_created_idx on seven.documents (kind, created_at desc);
+
+-- ===== v4: quotation contact block + "approved by" (name, phone, signature per supervisor) =====
+alter table seven.admin_users add column if not exists contact_name text not null default '';
+alter table seven.admin_users add column if not exists contact_phone text not null default '';
+alter table seven.admin_users add column if not exists signature text not null default '';   -- PNG data URL
+alter table seven.settings add column if not exists quote_contact_link text not null default 'sevenn.om';
+alter table seven.documents add column if not exists approver_id uuid references seven.admin_users(id) on delete set null;
+-- snapshot at save time, so an issued quotation never changes if the profile changes later
+alter table seven.documents add column if not exists approver_name text not null default '';
+alter table seven.documents add column if not exists approver_phone text not null default '';
+alter table seven.documents add column if not exists approver_signature text not null default '';

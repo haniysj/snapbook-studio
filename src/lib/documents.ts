@@ -25,7 +25,15 @@ export type Doc = {
   source_id?: string | null;
   created_by_name?: string;
   created_at?: string;
+  /** Quotation "approved by" — the supervisor whose contact + signature closes the quote. */
+  approver_id?: string | null;
+  approver_name?: string;
+  approver_phone?: string;
+  approver_signature?: string;
 };
+
+/** A supervisor's contact block (filled by each supervisor from their own dashboard). */
+export type Approver = { id: string; contact_name: string; contact_phone: string; signature: string };
 
 const r3 = (n: number) => Math.round((Number(n) || 0) * 1000) / 1000;
 
@@ -71,6 +79,7 @@ export function emptyDoc(kind: DocKind): Doc {
     paid: 0,
     notes: "",
     status: "open",
+    approver_id: null,
   };
 }
 

@@ -7,6 +7,7 @@ import { useLang, useSettings } from "@/lib/app-context";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { FormGroup, FormRow, fieldCls } from "@/components/admin/IosSheet";
 import { cn } from "@/lib/utils";
+import { MyContactCard } from "@/components/admin/MyContactCard";
 
 export function SettingsTab() {
   const { lang } = useLang();
@@ -99,6 +100,8 @@ export function SettingsTab() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <MyContactCard />
+
       <FormGroup label={ar ? "الشعار" : "Logo"} footer={ar ? "يظهر الشعار في أعلى الموقع وأيقونة المتصفح. يُحفظ فور التغيير." : "Shown in the header and browser icon. Saved immediately."}>
         <div className="flex items-center gap-4 px-4 py-4">
           <div className="flex h-24 w-20 shrink-0 items-center justify-center rounded-2xl bg-fill p-2.5">

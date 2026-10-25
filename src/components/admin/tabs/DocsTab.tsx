@@ -10,8 +10,8 @@ import { Currency } from "@/components/site/Currency";
 import { DocPage, PAGE_W } from "@/components/admin/docs/DocPage";
 import { PdfIcon, PrintIcon } from "@/components/admin/docs/FileIcons";
 import { downloadBlob, makePdf, printNode, sharePdf } from "@/components/admin/docs/pdf";
-import { deleteDoc, listDocs, saveDoc } from "@/lib/docs.functions";
-import { docTotals, emptyDoc, invoiceState, money, todayKey, type Doc, type DocKind } from "@/lib/documents";
+import { deleteDoc, listApprovers, listDocs, saveDoc } from "@/lib/docs.functions";
+import { docTotals, emptyDoc, invoiceState, money, todayKey, type Approver, type Doc, type DocKind } from "@/lib/documents";
 import { cn } from "@/lib/utils";
 
 type Row = Doc & { id: string; number: string; total: number; created_by?: string | null };
@@ -111,6 +111,7 @@ export function DocsTab({ isSuper, myId }: { isSuper: boolean; myId: string }) {
 
       <DocEditor
         doc={editing}
+        myId={myId}
         onClose={() => setEditing(null)}
         onSaved={(row) => { setEditing(null); refresh(); setViewing(row); }}
       />
@@ -285,12 +286,26 @@ function DocViewer({
 }
 
 /* ---------------- editor ---------------- */
-function DocEditor({ doc, onClose, onSaved }: { doc: Doc | null; onClose: () => void; onSaved: (r: Row) => void }) {
+function DocEditor({ doc, myId, onClose, onSaved }: { doc: Doc | null; myId: string; onClose: () => void; onSaved: (r: Row) => void }) {
   const { lang } = useLang();
   const ar = lang === "ar";
   const [d, setD] = useState<Doc | null>(doc);
   const [saving, setSaving] = useState(false);
+
+  const { data: approvers = [], isFetched: approversReady } = useQuery({
+    queryKey: ["approvers"],
+    queryFn: () => listApprovers() as Promise<Approver[]>,
+    enabled: !!doc && doc.kind === "quote",
+  });
+
   useEffect(() => setD(doc ? structuredClone(doc) : null), [doc]);
+
+  // New quotation: approved by me by default, when my details are filled in.
+  useEffect(() => {
+    if (!doc || doc.kind !== "quote" || doc.id || !approversReady) return;
+    const mine = approvers.find((a) => a.id === myId);
+    if (mine) setD((x) => (x && !x.id && x.approver_id == null ? withApprover(x, mine) : x));
+  }, [doc, approversReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: bookings = [] } = useQuery({
     queryKey: ["admin_bookings"],
@@ -415,6 +430,32 @@ function DocEditor({ doc, onClose, onSaved }: { doc: Doc | null; onClose: () => 
         )}
       </FormGroup>
 
+      {!isInvoice && (
+        <FormGroup
+          label={ar ? "اعتماد بواسطة" : "Approved by"}
+          footer={approvers.length === 0
+            ? (ar ? "لا توجد أسماء بعد. يضيف كل مشرف اسمه ورقمه وتوقيعه من الإعدادات ← بياناتي في عروض الأسعار." : "No names yet. Each supervisor adds their name, phone and signature in Settings → My details on quotations.")
+            : (ar ? "يظهر الاسم ورقم الهاتف والتوقيع في نهاية عرض السعر." : "The name, phone and signature appear at the end of the quotation.")}
+        >
+          <div className="px-4 py-2">
+            <select
+              className={cn(fieldCls, "cursor-pointer")}
+              value={d.approver_id ?? ""}
+              onChange={(e) => {
+                const a = approvers.find((x) => x.id === e.target.value);
+                set(a ? withApprover(d, a) : { approver_id: null, approver_name: "", approver_phone: "", approver_signature: "" });
+              }}
+            >
+              <option value="">{ar ? "— بدون —" : "— None —"}</option>
+              {d.approver_id && !approvers.some((a) => a.id === d.approver_id) && (
+                <option value={d.approver_id}>{d.approver_name}</option>
+              )}
+              {approvers.map((a) => <option key={a.id} value={a.id}>{a.contact_name}</option>)}
+            </select>
+          </div>
+        </FormGroup>
+      )}
+
       <FormGroup label={ar ? "ملاحظات (تظهر في المستند)" : "Notes (shown on the document)"}>
         <div className="px-4 py-2.5">
           <textarea rows={3} className={cn(fieldCls, "resize-none leading-7")} value={d.notes} onChange={(e) => set({ notes: e.target.value })} placeholder={ar ? "مثال: يشمل السعر التعديل والتسليم خلال أسبوعين." : "e.g. Includes editing, delivery within two weeks."} />
@@ -427,19 +468,23 @@ function DocEditor({ doc, onClose, onSaved }: { doc: Doc | null; onClose: () => 
   );
 }
 
+const withApprover = (d: Doc, a: Approver): Doc => ({
+  ...d, approver_id: a.id, approver_name: a.contact_name, approver_phone: a.contact_phone, approver_signature: a.signature,
+});
+
 /* ---------------- header & footer design ---------------- */
 function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpenChange: (v: boolean) => void; initialKind: DocKind }) {
   const { lang } = useLang();
   const ar = lang === "ar";
   const { settings, refresh } = useSettings();
   const [kind, setKind] = useState<DocKind>(initialKind);
-  const [v, setV] = useState({ invoice_header: "", invoice_footer: "", quote_header: "", quote_footer: "" });
+  const [v, setV] = useState({ invoice_header: "", invoice_footer: "", quote_header: "", quote_footer: "", quote_contact_link: "" });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setKind(initialKind);
-    setV({ invoice_header: settings.invoice_header, invoice_footer: settings.invoice_footer, quote_header: settings.quote_header, quote_footer: settings.quote_footer });
+    setV({ invoice_header: settings.invoice_header, invoice_footer: settings.invoice_footer, quote_header: settings.quote_header, quote_footer: settings.quote_footer, quote_contact_link: settings.quote_contact_link });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hKey = kind === "invoice" ? "invoice_header" : "quote_header";
@@ -456,6 +501,7 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
       { desc: ar ? "ألبوم مطبوع إضافي" : "Extra printed album", qty: 1, price: 35 },
     ],
     paid: kind === "invoice" ? 50 : 0,
+    ...(kind === "quote" ? { approver_id: "sample", approver_name: ar ? "اسم المعتمِد" : "Approver name", approver_phone: "+968 9xxx xxxx", approver_signature: "" } : {}),
   };
 
   const save = async () => {
@@ -487,6 +533,13 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
           <textarea rows={3} className={cn(fieldCls, "resize-none leading-7")} value={v[fKey]} onChange={(e) => setV({ ...v, [fKey]: e.target.value })} placeholder={ar ? "شكراً لثقتكم بنا." : "Thank you for your trust."} />
         </div>
       </FormGroup>
+      {kind === "quote" && (
+        <FormGroup label={ar ? "بجانب رقم الهاتف في «للتواصل والاستفسار»" : "Next to the phone in the contact block"} footer={ar ? "مثال: sevenn.om — الاسم والرقم والتوقيع من «اعتماد بواسطة»." : "e.g. sevenn.om — name, phone and signature come from “Approved by”."}>
+          <div className="px-4 py-2.5">
+            <input className={fieldCls} dir="ltr" value={v.quote_contact_link} onChange={(e) => setV({ ...v, quote_contact_link: e.target.value })} placeholder="sevenn.om" />
+          </div>
+        </FormGroup>
+      )}
       <div className="section-label">{ar ? "معاينة" : "Preview"}</div>
       <PreviewWithSettings doc={sample} overrides={v} />
     </IosSheet>
