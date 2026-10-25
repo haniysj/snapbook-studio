@@ -47,17 +47,24 @@ export function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-/** Share the PDF through the phone's share sheet (WhatsApp, Mail…). Returns false if not supported. */
-export async function sharePdf(blob: Blob, filename: string, title: string): Promise<boolean> {
+/**
+ * Share the PDF through the phone's share sheet (WhatsApp, Mail…).
+ * Must be called straight from a tap with the blob already built — browsers refuse
+ * (NotAllowedError "Permission denied") when the tap is followed by a slow PDF render.
+ * Returns "unsupported", "blocked" (needs a fresh tap), or "ok".
+ */
+export async function sharePdf(blob: Blob, filename: string, title: string): Promise<"ok" | "unsupported" | "blocked"> {
   const file = new File([blob], filename, { type: "application/pdf" });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-  if (!nav.share || !nav.canShare?.({ files: [file] })) return false;
+  if (!nav.share || !nav.canShare?.({ files: [file] })) return "unsupported";
   try {
     await nav.share({ files: [file], title });
   } catch (e: any) {
-    if (e?.name !== "AbortError") throw e;
+    if (e?.name === "AbortError") return "ok";
+    if (e?.name === "NotAllowedError") return "blocked";
+    throw e;
   }
-  return true;
+  return "ok";
 }
 
 /** Print the page exactly as rendered, via a hidden iframe (A4, no margins). */

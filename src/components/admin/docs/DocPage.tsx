@@ -204,25 +204,25 @@ export const DocPage = forwardRef<HTMLDivElement, { doc: Doc; settings: SiteSett
         )}
       </div>
 
-      {/* ===== QUOTATION CONTACT + SIGNATURE ===== */}
+      {/* ===== QUOTATION CONTACT + SIGNATURE (signature sits beside the name, on its left) ===== */}
       {!isInvoice && doc.approver_name && (
-        <div style={{ padding: "26px 48px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ color: accent, fontSize: 13, fontWeight: 700 }}>للتواصل والاستفسار:</div>
-            <div style={{ marginTop: 6, fontSize: 15, fontWeight: 700, lineHeight: 1.4 }}>{doc.approver_name}</div>
-            {/* RTL row: phone on the right, then the divider, then the link on the left */}
-            <div dir="rtl" style={{ marginTop: 4, color: MUTED, fontSize: 13, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
-              {[doc.approver_phone, settings.quote_contact_link].filter(Boolean).map((x, i) => (
-                <span key={i}>
-                  {i > 0 && <span style={{ margin: "0 12px", color: "#b8bdc6" }}>|</span>}
-                  <bdi dir="ltr">{x}</bdi>
-                </span>
-              ))}
-            </div>
+        <div style={{ padding: "26px 48px 0" }}>
+          <div style={{ color: accent, fontSize: 13, fontWeight: 700 }}>للتواصل والاستفسار:</div>
+          <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 16, minHeight: 30 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.4, whiteSpace: "nowrap" }}>{doc.approver_name}</div>
+            {doc.approver_signature && (
+              <img src={doc.approver_signature} alt="" style={{ height: 58, width: "auto", maxWidth: 200, objectFit: "contain", flexShrink: 0, margin: "-8px 0" }} />
+            )}
           </div>
-          {doc.approver_signature && (
-            <img src={doc.approver_signature} alt="" style={{ height: 72, width: "auto", maxWidth: 220, objectFit: "contain", flexShrink: 0 }} />
-          )}
+          {/* RTL row: phone on the right, then the divider, then the link on the left */}
+          <div dir="rtl" style={{ marginTop: 4, color: MUTED, fontSize: 13, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
+            {[doc.approver_phone, settings.quote_contact_link].filter(Boolean).map((x, i) => (
+              <span key={i}>
+                {i > 0 && <span style={{ margin: "0 12px", color: "#b8bdc6" }}>|</span>}
+                <bdi dir="ltr">{x}</bdi>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

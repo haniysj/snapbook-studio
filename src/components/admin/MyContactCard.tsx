@@ -7,7 +7,9 @@ import { getMyContact, saveMyContact } from "@/lib/docs.functions";
 import { FormGroup, FormRow, fieldCls } from "@/components/admin/IosSheet";
 import { cn } from "@/lib/utils";
 
-const INK = "#1b2333";
+/** Signatures are always stored in pen blue. */
+const INK = "#1f3fa6";
+const BLUE = [31, 63, 166] as const;
 const PAD_H = 170;
 
 /** Crops transparent/white margins and scales the result to a compact PNG data URL. */
@@ -36,7 +38,18 @@ function exportTrimmed(src: HTMLCanvasElement): string {
   const out = document.createElement("canvas");
   out.width = Math.max(1, Math.round(cw * s));
   out.height = Math.max(1, Math.round(ch * s));
-  out.getContext("2d")!.drawImage(src, x0, y0, cw, ch, 0, 0, out.width, out.height);
+  const octx = out.getContext("2d")!;
+  octx.drawImage(src, x0, y0, cw, ch, 0, 0, out.width, out.height);
+  // Recolor to blue ink: background → transparent, darker strokes → more opaque blue.
+  const img = octx.getImageData(0, 0, out.width, out.height);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    const ink = Math.min(1, Math.max(0, (235 - lum) / 150));
+    d[i] = BLUE[0]; d[i + 1] = BLUE[1]; d[i + 2] = BLUE[2];
+    d[i + 3] = Math.round(d[i + 3] * ink);
+  }
+  octx.putImageData(img, 0, 0);
   return out.toDataURL("image/png");
 }
 
@@ -208,17 +221,19 @@ export function MyContactCard() {
         {(name.trim() || phone.trim()) && (
           <div className="px-4 py-3">
             <div className="mb-2 text-[13px] font-semibold text-muted-foreground">{ar ? "كيف يظهر في العرض" : "How it looks"}</div>
-            <div dir="rtl" className="flex items-end justify-between gap-4 rounded-xl bg-white px-4 py-3 text-[#1b2333] ring-1 ring-black/5">
+            <div dir="rtl" className="rounded-xl bg-white px-4 py-3 text-[#1b2333] ring-1 ring-black/5">
               <div className="min-w-0">
                 <div className="text-[13px] font-bold text-primary">للتواصل والاستفسار:</div>
-                <div className="mt-1 truncate text-[15px] font-bold">{name.trim() || "—"}</div>
+                <div className="mt-1 flex min-h-[28px] items-center gap-3">
+                  <span className="truncate text-[15px] font-bold">{name.trim() || "—"}</span>
+                  {sig && <img src={sig} alt="" className="-my-1.5 h-11 w-auto max-w-[45%] shrink-0 object-contain" />}
+                </div>
                 <div dir="rtl" className="mt-0.5 whitespace-nowrap text-[12.5px] text-neutral-500">
                   {[phone.trim(), settings.quote_contact_link].filter(Boolean).map((x, i) => (
                     <span key={i}>{i > 0 && <span className="mx-2.5 text-neutral-300">|</span>}<bdi dir="ltr">{x}</bdi></span>
                   ))}
                 </div>
               </div>
-              {sig && <img src={sig} alt="" className="h-12 w-auto max-w-[40%] shrink-0 object-contain" />}
             </div>
           </div>
         )}

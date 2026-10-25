@@ -200,17 +200,48 @@ function DocViewer({
     try { await fn(); } catch (e: any) { toast.error(e?.message ?? String(e)); } finally { setBusy(null); }
   };
 
+  // Build the PDF in the background as soon as the document is shown, so "Share" can open
+  // the share sheet directly from the tap (a slow render before share() = "Permission denied").
+  const pdf = useRef<{ key: string; promise: Promise<Blob>; blob: Blob | null } | null>(null);
+  const pdfKey = row ? JSON.stringify(row) : "";
+  const getPdf = () => {
+    if (pdf.current?.key !== pdfKey) {
+      const entry = { key: pdfKey, promise: makePdf(page.current!), blob: null as Blob | null };
+      entry.promise.then((b) => { entry.blob = b; }).catch(() => { if (pdf.current === entry) pdf.current = null; });
+      pdf.current = entry;
+    }
+    return pdf.current!;
+  };
+  useEffect(() => {
+    if (!row) return;
+    const t = setTimeout(() => { if (page.current) getPdf().promise.catch(() => {}); }, 900);
+    return () => clearTimeout(t);
+  }, [pdfKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const download = () => run("pdf", async () => {
-    downloadBlob(await makePdf(page.current!), filename);
+    downloadBlob(await getPdf().promise, filename);
     toast.success(ar ? "تم تحميل ملف PDF" : "PDF downloaded");
   });
-  const share = () => run("share", async () => {
-    const blob = await makePdf(page.current!);
-    if (!(await sharePdf(blob, filename, title))) {
+
+  // When the file wasn't ready at the tap, the Share button turns into "tap to share":
+  // the browser only opens the share sheet straight from a tap.
+  const [tapToShare, setTapToShare] = useState(false);
+  useEffect(() => setTapToShare(false), [pdfKey]);
+
+  const shareBlob = async (blob: Blob) => {
+    const r = await sharePdf(blob, filename, title);
+    if (r === "unsupported") {
       downloadBlob(blob, filename);
       toast.message(ar ? "المشاركة غير مدعومة في هذا المتصفح، تم تحميل الملف بدلاً منها" : "Sharing isn't supported here, so the file was downloaded");
     }
-  });
+    setTapToShare(r === "blocked");
+  };
+
+  const share = () => {
+    const ready = pdf.current?.key === pdfKey ? pdf.current.blob : null;
+    if (ready) { shareBlob(ready).catch((e) => toast.error(e?.message ?? String(e))); return; }
+    run("share", async () => { await getPdf().promise; setTapToShare(true); });
+  };
   const print = () => run("print", () => printNode(page.current!));
 
   const setStatus = (status: string) => run("status", async () => {
@@ -245,7 +276,13 @@ function DocViewer({
           <div className="grid grid-cols-4 gap-2">
             <Action k="pdf" onClick={download} icon={<PdfIcon className="h-6 w-6" />} label={ar ? "تحميل PDF" : "PDF"} />
             <Action k="print" onClick={print} icon={<PrintIcon className="h-6 w-6" />} label={ar ? "طباعة" : "Print"} />
-            <Action k="share" onClick={share} icon={<Share2 className="h-6 w-6 text-ios-blue" />} label={ar ? "مشاركة" : "Share"} />
+            <Action
+              k="share"
+              onClick={share}
+              icon={<Share2 className={cn("h-6 w-6", tapToShare ? "text-white" : "text-ios-blue")} />}
+              label={tapToShare ? (ar ? "اضغط للمشاركة" : "Tap to share") : ar ? "مشاركة" : "Share"}
+              tone={tapToShare ? "bg-ios-blue text-white animate-pulse" : undefined}
+            />
             <Action k="edit" onClick={() => onEdit(row)} icon={<Pencil className="h-6 w-6" />} label={ar ? "تعديل" : "Edit"} />
           </div>
 
