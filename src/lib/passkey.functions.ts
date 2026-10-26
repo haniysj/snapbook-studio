@@ -59,6 +59,7 @@ export const passkeyRegisterOptions = createServerFn({ method: "POST" }).handler
     attestationType: "none",
     excludeCredentials: existing.map((c) => ({ id: c.id, transports: (c.transports ? c.transports.split(",") : undefined) as any })),
     authenticatorSelection: { residentKey: "required", userVerification: "required", authenticatorAttachment: "platform" },
+    preferredAuthenticatorType: "localDevice", // use this phone's own Face ID / fingerprint, not a QR code or security key
     timeout: 120_000,
   });
   await q(

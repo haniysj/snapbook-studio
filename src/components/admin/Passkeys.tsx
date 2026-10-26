@@ -56,7 +56,7 @@ export function PasskeyPrompt() {
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"><BiometricIcon className="h-6 w-6" /></span>
       <div className="min-w-0 flex-1">
         <div className="text-[15px] font-bold">{ar ? `ادخل بـ${label} بدل الرقم السري` : `Sign in with ${label}`}</div>
-        <div className="text-[12.5px] text-muted-foreground">{ar ? "فعّلها مرة واحدة على هذا الجهاز." : "Turn it on once for this device."}</div>
+        <div className="text-[12.5px] text-muted-foreground">{ar ? "تستخدم بصمة هاتفك نفسها، ولا تُسجَّل بصمة جديدة. وافق على رسالة «حفظ مفتاح المرور» مرة واحدة." : "Uses the face/fingerprint already on your phone. Approve the one-time “Save passkey” message."}</div>
       </div>
       <button
         type="button"
@@ -104,8 +104,8 @@ export function PasskeySettings() {
     <FormGroup
       label={ar ? "الدخول بالبصمة" : "Biometric sign-in"}
       footer={ar
-        ? "البصمة تبقى محفوظة في جهازك ولا تُرسل إلى المنصة. يبقى الرقم السري متاحاً دائماً."
-        : "Your face or fingerprint never leaves your device. The PIN always keeps working."}
+        ? "تُستخدم بصمة الوجه أو الإصبع المخزّنة في هاتفك نفسها، ولا تُسجَّل بصمة جديدة ولا تُرسل إلى المنصة. عند التفعيل يعرض الهاتف رسالة «حفظ مفتاح المرور» (Passkey) — وهو رمز أمان للموقع فقط، يُحفظ مرة واحدة. يبقى الرقم السري متاحاً دائماً."
+        : "Uses the face/fingerprint already on your phone; nothing new is enrolled and nothing leaves the device. The one-time “Save passkey” message only stores a site key. The PIN always keeps working."}
     >
       <div className="ios-row">
         <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-[9px] text-white", thisDeviceOn ? "bg-ios-green" : "bg-[#8E8E93]")}>
