@@ -169,3 +169,23 @@ alter table seven.settings alter column invoice_letterhead set default true;
 
 -- ===== v7: day-before shoot reminder (sent once per booking by the daily cron) =====
 alter table seven.bookings add column if not exists reminder_sent_at timestamptz;
+
+-- ===== v8: Face ID / fingerprint sign-in (WebAuthn passkeys) =====
+create table if not exists seven.passkeys (
+  id text primary key,                       -- credential id (base64url)
+  admin_id uuid not null references seven.admin_users(id) on delete cascade,
+  public_key text not null,                  -- base64url COSE public key
+  counter bigint not null default 0,
+  transports text not null default '',
+  device_name text not null default '',
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz
+);
+create index if not exists passkeys_admin_idx on seven.passkeys (admin_id);
+-- one-time challenges (expire after 5 minutes)
+create table if not exists seven.webauthn_challenges (
+  challenge text primary key,
+  admin_id uuid references seven.admin_users(id) on delete cascade,
+  purpose text not null,                     -- 'register' | 'login'
+  expires_at timestamptz not null
+);

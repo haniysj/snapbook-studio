@@ -6,6 +6,8 @@ import { supabase, type Session } from "@/integrations/supabase/client";
 import { Header } from "@/components/site/Header";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { BiometricIcon } from "@/components/admin/Passkeys";
+import { biometricLabel, biometricsAvailable, deviceFlag, signInWithBiometrics } from "@/lib/passkey-client";
 import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -58,6 +60,8 @@ const LEN = 8; // PINs are 8 digits
 const MIN = 6; // older shorter PINs can still press «دخول»
 const MAX = LEN;
 
+let autoPrompted = false; // ask for Face ID / fingerprint automatically only once per page load
+
 /** iPhone-style passcode entry: dots + keypad, also works with a physical keyboard. */
 function PinPad() {
   const { lang } = useLang();
@@ -82,6 +86,31 @@ function PinPad() {
       );
     }
   }, [busy, ar]);
+
+  // Face ID / fingerprint
+  const [bio, setBio] = useState(false);
+  const [bioBusy, setBioBusy] = useState(false);
+  const bioLogin = useCallback(async () => {
+    if (bioBusy || busy) return;
+    setBioBusy(true);
+    try {
+      const r = await signInWithBiometrics();
+      if (r === "unknown") toast.error(ar ? "البصمة غير مسجّلة في المنصة. ادخل بالرقم السري ثم فعّلها من جديد." : "This device's sign-in isn't registered. Use your PIN, then enable it again.");
+      else if (r === "error") toast.error(ar ? "تعذّر التحقق من البصمة، استخدم الرقم السري" : "Couldn't verify, please use your PIN");
+    } catch (e: any) {
+      toast.error(e?.message ?? String(e));
+    } finally {
+      setBioBusy(false);
+    }
+  }, [bioBusy, busy, ar]);
+  useEffect(() => {
+    const first = !autoPrompted; // not again after a deliberate sign-out
+    autoPrompted = true;
+    biometricsAvailable().then((ok) => {
+      setBio(ok);
+      if (ok && first && deviceFlag()) bioLogin();
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const press = (d: string) => {
     if (pin.length >= MAX || busy) return;
@@ -125,15 +154,28 @@ function PinPad() {
         {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
           <Key key={d} onClick={() => press(d)}>{d}</Key>
         ))}
-        <button
-          type="button"
-          onClick={back}
-          disabled={!pin}
-          aria-label={ar ? "حذف" : "Delete"}
-          className="tap grid h-[74px] w-[74px] place-items-center rounded-full text-foreground disabled:opacity-30"
-        >
-          <Delete className="h-6 w-6" />
-        </button>
+        {bio && !pin ? (
+          <button
+            type="button"
+            onClick={bioLogin}
+            disabled={bioBusy}
+            aria-label={ar ? `الدخول بـ${biometricLabel(true)}` : `Sign in with ${biometricLabel(false)}`}
+            title={ar ? `الدخول بـ${biometricLabel(true)}` : `Sign in with ${biometricLabel(false)}`}
+            className="tap grid h-[74px] w-[74px] place-items-center rounded-full text-primary"
+          >
+            {bioBusy ? <Loader2 className="h-7 w-7 animate-spin" /> : <BiometricIcon className="h-9 w-9" />}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={back}
+            disabled={!pin}
+            aria-label={ar ? "حذف" : "Delete"}
+            className="tap grid h-[74px] w-[74px] place-items-center rounded-full text-foreground disabled:opacity-30"
+          >
+            <Delete className="h-6 w-6" />
+          </button>
+        )}
         <Key onClick={() => press("0")}>0</Key>
         <button
           type="button"

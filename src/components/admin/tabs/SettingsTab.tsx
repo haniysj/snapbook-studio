@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLang, useSettings } from "@/lib/app-context";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { FormGroup, FormRow, fieldCls } from "@/components/admin/IosSheet";
+import { PasskeySettings } from "@/components/admin/Passkeys";
 import { cn } from "@/lib/utils";
 import { MyContactCard } from "@/components/admin/MyContactCard";
 
@@ -100,6 +101,8 @@ export function SettingsTab() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <PasskeySettings />
+
       <MyContactCard />
 
       <FormGroup label={ar ? "الشعار" : "Logo"} footer={ar ? "يظهر الشعار في أعلى الموقع وأيقونة المتصفح. يُحفظ فور التغيير." : "Shown in the header and browser icon. Saved immediately."}>

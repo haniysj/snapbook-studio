@@ -100,6 +100,12 @@ const auth = {
       return { data: { session: null }, error: { message: e?.message ?? "error" } };
     }
   },
+  /** Finish a Face ID / fingerprint sign-in (the server already verified it and set the cookie). */
+  completeSignIn(user: { id: string; display_name: string; is_super: boolean }) {
+    const s = toSession(user);
+    emit("SIGNED_IN", s);
+    return s;
+  },
   async signOut() {
     try { await authLogout(); } catch { /* ignore */ }
     emit("SIGNED_OUT", null);

@@ -13,6 +13,7 @@ import { UsersTab } from "./tabs/UsersTab";
 import { DocsTab } from "./tabs/DocsTab";
 import { cn } from "@/lib/utils";
 import { NotificationsBell, useLiveBookingAlerts } from "./Notifications";
+import { PasskeyPrompt } from "./Passkeys";
 
 type TabId = "bookings" | "docs" | "packages" | "gallery" | "settings" | "users";
 
@@ -73,6 +74,8 @@ export function AdminDashboard({ session }: { session: Session }) {
         </button>
         </div>
       </div>
+
+      <PasskeyPrompt />
 
       {/* tablets/desktop: segmented control */}
       <SegmentedControl
