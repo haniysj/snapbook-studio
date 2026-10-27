@@ -10,6 +10,9 @@ import { useLang } from "@/lib/app-context";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+/** How long each image stays before the next one (also the progress bar's duration). */
+const SLIDE_MS = 5000;
+
 type Img = { id: string; url: string; title_ar: string | null; media_type: string; category_id: string | null };
 
 export function GalleryCarousel() {
@@ -39,12 +42,27 @@ export function GalleryCarousel() {
     setIndex((i) => (i + dir + images.length) % images.length);
   };
 
-  // auto-advance on the inline viewer
+  // Auto-advance: driven by the progress bar's CSS animation (see .slide-progress in styles.css).
+  // The bar pauses while the visitor hovers / holds a finger on the photo, when the tab is in the
+  // background, or when the gallery is scrolled out of view — and the slideshow pauses with it.
+  const [held, setHeld] = useState(false);
+  const [tabHidden, setTabHidden] = useState(false);
+  const [offscreen, setOffscreen] = useState(false);
+  const stage = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (images.length <= 1 || viewer) return;
-    const id = setInterval(() => setIndex((i) => (i + 1) % images.length), 5000);
-    return () => clearInterval(id);
-  }, [images.length, viewer]);
+    const onVis = () => setTabHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+  useEffect(() => {
+    const el = stage.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setOffscreen(!e.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [images.length > 0]);
+  const timerPaused = held || tabHidden || offscreen;
+  const next = () => setIndex((i) => (i + 1) % Math.max(images.length, 1));
 
   useEffect(() => {
     if (!viewer) return;
@@ -60,6 +78,13 @@ export function GalleryCarousel() {
   }, [viewer, rtl, images.length]);
 
   const swipe = useSwipe((dx) => go((rtl ? dx > 0 : dx < 0) ? 1 : -1));
+  const stageHandlers = {
+    onTouchStart: (e: React.TouchEvent) => { setHeld(true); swipe.onTouchStart(e); },
+    onTouchEnd: (e: React.TouchEvent) => { setHeld(false); swipe.onTouchEnd(e); },
+    onTouchCancel: () => setHeld(false),
+    onMouseEnter: () => setHeld(true),
+    onMouseLeave: () => setHeld(false),
+  };
   const current = images[index];
 
   return (
@@ -93,8 +118,9 @@ export function GalleryCarousel() {
       ) : (
         <>
           <div
+            ref={stage}
             className="relative aspect-[4/5] select-none overflow-hidden rounded-[1.75rem] bg-black sm:aspect-[16/9] lg:aspect-[2/1]"
-            {...swipe}
+            {...stageHandlers}
           >
             <div
               className="flex h-full transition-transform duration-700 ease-[cubic-bezier(.2,.8,.2,1)]"
@@ -117,6 +143,21 @@ export function GalleryCarousel() {
               ))}
             </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
+            {images.length > 1 && !viewer && (
+              <>
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
+                {/* time left before the next image */}
+                <div className="pointer-events-none absolute inset-x-4 top-3.5 h-[3px] overflow-hidden rounded-full bg-white/35 ring-1 ring-black/15" aria-hidden="true">
+                  <div
+                    key={`${cat}-${index}`}
+                    className="slide-progress h-full rounded-full bg-white shadow-[0_0_0_.5px_rgba(0,0,0,.35)]"
+                    style={{ ["--slide-ms" as string]: `${SLIDE_MS}ms` }}
+                    data-paused={timerPaused}
+                    onAnimationEnd={next}
+                  />
+                </div>
+              </>
+            )}
             {current?.title_ar && (
               <div className="pointer-events-none absolute bottom-4 start-4 max-w-[65%] truncate text-sm font-semibold text-white">{current.title_ar}</div>
             )}

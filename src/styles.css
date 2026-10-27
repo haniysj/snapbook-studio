@@ -556,3 +556,17 @@ html.dark:not([data-theme]) .logo-shine {
 @media (prefers-reduced-motion: reduce) {
   .logo-shine, .ambient-pattern, .ambient-orb { animation: none !important; }
 }
+
+/* ============================================================
+   Gallery slideshow timer: the bar's animation IS the timer.
+   When it finishes (animationend) the next image is shown, so the
+   bar and the slide change can never drift apart.
+   ============================================================ */
+@keyframes slide-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.slide-progress {
+  transform-origin: left center;
+  animation: slide-progress var(--slide-ms, 5000ms) linear forwards;
+  will-change: transform;
+}
+[dir="rtl"] .slide-progress { transform-origin: right center; }
+.slide-progress[data-paused="true"] { animation-play-state: paused; }
