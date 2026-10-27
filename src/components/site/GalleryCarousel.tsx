@@ -6,7 +6,8 @@ import { MediaImage } from "@/components/site/MediaImage";
 import { MediaVideo } from "@/components/site/MediaVideo";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { SegmentedControl } from "@/components/ui/segmented";
-import { useLang } from "@/lib/app-context";
+import { useLang, useSettings } from "@/lib/app-context";
+import { mediaSrc } from "@/integrations/supabase/client";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -143,29 +144,22 @@ export function GalleryCarousel() {
               ))}
             </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
-            {images.length > 1 && !viewer && (
-              <>
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
-                {/* time left before the next image */}
-                <div className="pointer-events-none absolute inset-x-4 top-3.5 h-[3px] overflow-hidden rounded-full bg-white/35 ring-1 ring-black/15" aria-hidden="true">
-                  <div
-                    key={`${cat}-${index}`}
-                    className="slide-progress h-full rounded-full bg-white shadow-[0_0_0_.5px_rgba(0,0,0,.35)]"
-                    style={{ ["--slide-ms" as string]: `${SLIDE_MS}ms` }}
-                    data-paused={timerPaused}
-                    onAnimationEnd={next}
-                  />
-                </div>
-              </>
-            )}
+            <Watermark />
             {current?.title_ar && (
-              <div className="pointer-events-none absolute bottom-4 start-4 max-w-[65%] truncate text-sm font-semibold text-white">{current.title_ar}</div>
+              <div className={cn("pointer-events-none absolute start-4 max-w-[70%] truncate text-sm font-semibold text-white", images.length > 1 ? "bottom-11" : "bottom-4")}>{current.title_ar}</div>
             )}
             {images.length > 1 && (
               <>
-                <div className="absolute bottom-4 end-4 rounded-full bg-black/45 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur">
-                  <span dir="ltr">{index + 1} / {images.length}</span>
-                </div>
+                <SlideDots
+                  count={images.length}
+                  index={index}
+                  running={!viewer}
+                  paused={timerPaused}
+                  resetKey={cat}
+                  onPick={setIndex}
+                  onDone={next}
+                  ar={rtl}
+                />
                 <NavButton side="start" onClick={() => go(-1)} rtl={rtl} />
                 <NavButton side="end" onClick={() => go(1)} rtl={rtl} />
               </>
@@ -214,11 +208,14 @@ export function GalleryCarousel() {
             </button>
           </div>
           <div className="relative flex flex-1 items-center justify-center px-2">
-            {current.media_type === "video" ? (
-              <MediaVideo key={current.id} path={current.url} className="max-h-full max-w-full rounded-lg" controls autoPlay playsInline />
-            ) : (
-              <MediaImage key={current.id} path={current.url} alt={current.title_ar ?? ""} className="max-h-full max-w-full object-contain" />
-            )}
+            <div className="relative flex max-h-full max-w-full">
+              {current.media_type === "video" ? (
+                <MediaVideo key={current.id} path={current.url} className="max-h-[calc(100dvh-9rem)] max-w-full rounded-lg" controls autoPlay playsInline />
+              ) : (
+                <MediaImage key={current.id} path={current.url} alt={current.title_ar ?? ""} className="max-h-[calc(100dvh-9rem)] max-w-full object-contain" />
+              )}
+              <Watermark />
+            </div>
             {images.length > 1 && (
               <>
                 <NavButton side="start" onClick={() => go(-1)} rtl={rtl} dark />
@@ -232,6 +229,84 @@ export function GalleryCarousel() {
         </div>
       )}
     </section>
+  );
+}
+
+/** Small logo in the top-right corner of every photo/video. */
+function Watermark() {
+  const { settings } = useSettings();
+  const src = settings.logo_url ? mediaSrc(settings.logo_url) : "/brand/logo-white.png";
+  return (
+    <img
+      src={src}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className="pointer-events-none absolute right-3 top-3 h-9 w-auto max-w-[22%] select-none object-contain opacity-80 drop-shadow-[0_1px_3px_rgba(0,0,0,.55)] sm:h-11 lg:h-12"
+    />
+  );
+}
+
+/**
+ * One dot per photo, close together, always left → right.
+ * While a photo is showing, the space after its dot opens and a bar fills it from the current
+ * dot to the next one; when the bar reaches the next dot the next photo appears and the space
+ * collapses. The bar's CSS animation is the slideshow timer (animationend → next photo).
+ * With many photos only a window of 9 dots is shown (like iOS).
+ */
+const WINDOW = 9;
+function SlideDots({
+  count, index, running, paused, resetKey, onPick, onDone, ar,
+}: {
+  count: number; index: number; running: boolean; paused: boolean; resetKey: string;
+  onPick: (i: number) => void; onDone: () => void; ar: boolean;
+}) {
+  const first = count <= WINDOW ? 0 : Math.min(Math.max(index - Math.floor(WINDOW / 2), 0), count - WINDOW);
+  const last = Math.min(count, first + WINDOW) - 1;
+  const dots = [];
+  for (let i = first; i <= last; i++) {
+    const active = i === index;
+    const edge = count > WINDOW && ((i === first && first > 0) || (i === last && last < count - 1));
+    dots.push(
+      <button
+        key={`d${i}`}
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onPick(i); }}
+        aria-label={ar ? `الصورة ${i + 1}` : `Photo ${i + 1}`}
+        aria-current={active ? "true" : undefined}
+        className="grid h-6 w-[13px] shrink-0 place-items-center"
+      >
+        <span className={cn("slide-dot block h-[7px] w-[7px] rounded-full shadow-[0_0_0_.5px_rgba(0,0,0,.3)]", active ? "bg-white" : "bg-white/55", edge && "scale-[.6]")} />
+      </button>,
+    );
+    // the opening space after the current dot (after the last dot it leads back to the first photo)
+    dots.push(
+      <span
+        key={`g${i}`}
+        aria-hidden="true"
+        className={cn("slide-gap relative block h-[3px] shrink-0 overflow-hidden rounded-full bg-white/35", active && running ? "mx-0.5 w-9 sm:w-11" : "w-0")}
+      >
+        {active && running && (
+          <span
+            key={`${resetKey}-${index}`}
+            className="slide-progress absolute inset-0 block rounded-full bg-white"
+            style={{ ["--slide-ms" as string]: `${SLIDE_MS}ms` }}
+            data-paused={paused}
+            onAnimationEnd={onDone}
+          />
+        )}
+      </span>,
+    );
+  }
+  return (
+    <div
+      dir="ltr"
+      className="absolute inset-x-0 bottom-2.5 flex items-center justify-center"
+      role="group"
+      aria-label={ar ? `الصورة ${index + 1} من ${count}` : `Photo ${index + 1} of ${count}`}
+    >
+      <div className="flex items-center rounded-full bg-black/25 px-2 backdrop-blur-sm">{dots}</div>
+    </div>
   );
 }
 

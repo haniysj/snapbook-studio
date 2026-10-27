@@ -568,5 +568,7 @@ html.dark:not([data-theme]) .logo-shine {
   animation: slide-progress var(--slide-ms, 5000ms) linear forwards;
   will-change: transform;
 }
-[dir="rtl"] .slide-progress { transform-origin: right center; }
 .slide-progress[data-paused="true"] { animation-play-state: paused; }
+/* the space between two dots opens while the timer runs, then collapses for the next photo */
+.slide-gap { transition: width .38s cubic-bezier(.2,.8,.2,1), margin .38s cubic-bezier(.2,.8,.2,1); }
+.slide-dot { transition: transform .3s ease, background-color .3s ease, opacity .3s ease; }
