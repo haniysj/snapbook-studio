@@ -263,8 +263,8 @@ export const DocPage = forwardRef<HTMLDivElement, { doc: Doc; settings: SiteSett
         )}
       </div>
 
-      {/* ===== QUOTATION CONTACT + SIGNATURE (signature sits beside the name, on its left) ===== */}
-      {!isInvoice && doc.approver_name && (
+      {/* ===== CONTACT + SIGNATURE ("approved by") — invoices and quotations (signature sits beside the name, on its left) ===== */}
+      {doc.approver_name && (
         <div style={{ position: "relative", padding: "26px 48px 0" }}>
           <div style={{ color: label, fontSize: 13, fontWeight: 700 }}>للتواصل والاستفسار:</div>
           <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 16, minHeight: 30 }}>

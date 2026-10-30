@@ -47,9 +47,9 @@ function clean(d: Doc) {
   };
 }
 
-/** Resolves the approver snapshot (quotes only). Unknown/deleted approver on an edit keeps the old snapshot. */
+/** Resolves the approver snapshot (invoices and quotes). Unknown/deleted approver on an edit keeps the old snapshot. */
 async function approverSnapshot(kind: DocKind, approverId: string | null | undefined) {
-  if (kind !== "quote" || !approverId) return { id: null, name: "", phone: "", signature: "" };
+  if (!approverId) return { id: null, name: "", phone: "", signature: "" };
   if (!/^[0-9a-f-]{36}$/i.test(approverId)) throw new Error("Invalid approver");
   const { q, tbl } = await import("./server/db");
   const rows = await q<{ id: string; contact_name: string; contact_phone: string; signature: string }>(

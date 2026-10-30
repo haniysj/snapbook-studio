@@ -162,10 +162,10 @@ export function MyContactCard() {
   return (
     <div className="mb-6">
       <FormGroup
-        label={ar ? "بياناتي في عروض الأسعار" : "My details on quotations"}
+        label={ar ? "بياناتي في الفواتير وعروض الأسعار" : "My details on invoices & quotations"}
         footer={ar
-          ? "تظهر في نهاية عرض السعر عند اختيارك في «اعتماد بواسطة». الحساب الذي لا يحتوي على اسم لا يظهر في القائمة."
-          : "Shown at the end of a quotation when you're picked under “Approved by”. Accounts without a name aren't listed."}
+          ? "تظهر في نهاية الفاتورة وعرض السعر عند اختيارك في «اعتماد بواسطة». الحساب الذي لا يحتوي على اسم لا يظهر في القائمة."
+          : "Shown at the end of an invoice or quotation when you're picked under “Approved by”. Accounts without a name aren't listed."}
       >
         <FormRow label={ar ? "الاسم" : "Name"}>
           <input className={fieldCls} value={name} onChange={(e) => setName(e.target.value)} placeholder={ar ? "الاسم الكامل كما يظهر في العرض" : "Full name as shown"} disabled={isLoading} />

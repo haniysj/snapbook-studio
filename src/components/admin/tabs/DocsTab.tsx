@@ -304,14 +304,14 @@ function DocEditor({ doc, myId, onClose, onSaved }: { doc: Doc | null; myId: str
   const { data: approvers = [], isFetched: approversReady } = useQuery({
     queryKey: ["approvers"],
     queryFn: () => listApprovers() as Promise<Approver[]>,
-    enabled: !!doc && doc.kind === "quote",
+    enabled: !!doc,
   });
 
   useEffect(() => setD(doc ? structuredClone(doc) : null), [doc]);
 
-  // New quotation: approved by me by default, when my details are filled in.
+  // New invoice or quotation: approved by me by default, when my details are filled in.
   useEffect(() => {
-    if (!doc || doc.kind !== "quote" || doc.id || !approversReady) return;
+    if (!doc || doc.id || !approversReady) return;
     const mine = approvers.find((a) => a.id === myId);
     if (mine) setD((x) => (x && !x.id && x.approver_id == null ? withApprover(x, mine) : x));
   }, [doc, approversReady]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -439,12 +439,12 @@ function DocEditor({ doc, myId, onClose, onSaved }: { doc: Doc | null; myId: str
         )}
       </FormGroup>
 
-      {!isInvoice && (
+      {(
         <FormGroup
           label={ar ? "اعتماد بواسطة" : "Approved by"}
           footer={approvers.length === 0
-            ? (ar ? "لا توجد أسماء بعد. يضيف كل مشرف اسمه ورقمه وتوقيعه من الإعدادات ← بياناتي في عروض الأسعار." : "No names yet. Each supervisor adds their name, phone and signature in Settings → My details on quotations.")
-            : (ar ? "يظهر الاسم ورقم الهاتف والتوقيع في نهاية عرض السعر." : "The name, phone and signature appear at the end of the quotation.")}
+            ? (ar ? "لا توجد أسماء بعد. يضيف كل مشرف اسمه ورقمه وتوقيعه من الإعدادات ← بياناتي في الفواتير وعروض الأسعار." : "No names yet. Each supervisor adds their name, phone and signature in Settings → My details on documents.")
+            : (ar ? `يظهر الاسم والتوقيع ورقم الهاتف وحساب الانستقرام في نهاية ${isInvoice ? "الفاتورة" : "عرض السعر"}.` : `The name, signature, phone and Instagram appear at the end of the ${isInvoice ? "invoice" : "quotation"}.`)}
         >
           <div className="px-4 py-2">
             <select
@@ -529,7 +529,7 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
       { desc: ar ? "ألبوم مطبوع إضافي" : "Extra printed album", qty: 1, price: 35 },
     ],
     paid: kind === "invoice" ? 50 : 0,
-    ...(kind === "quote" ? { approver_id: "sample", approver_name: ar ? "اسم المعتمِد" : "Approver name", approver_phone: "+968 9xxx xxxx", approver_signature: "" } : {}),
+    approver_id: "sample", approver_name: ar ? "اسم المعتمِد" : "Approver name", approver_phone: "+968 9xxx xxxx", approver_signature: "",
   };
 
   const save = async () => {
@@ -575,8 +575,8 @@ function DesignSheet({ open, onOpenChange, initialKind }: { open: boolean; onOpe
           <textarea rows={3} className={cn(fieldCls, "resize-none leading-7")} value={v[fKey]} onChange={(e) => setV({ ...v, [fKey]: e.target.value })} placeholder={ar ? "شكراً لثقتكم بنا." : "Thank you for your trust."} />
         </div>
       </FormGroup>
-      {kind === "quote" && (
-        <FormGroup label={ar ? "بجانب رقم الهاتف في «للتواصل والاستفسار»" : "Next to the phone in the contact block"} footer={ar ? "مثال: sevenn.om — الاسم والرقم والتوقيع من «اعتماد بواسطة»." : "e.g. sevenn.om — name, phone and signature come from “Approved by”."}>
+      {(
+        <FormGroup label={ar ? "حساب الانستقرام بجانب رقم الهاتف" : "Instagram next to the phone"} footer={ar ? "مثال: sevenn.om — يظهر في الفواتير وعروض الأسعار. الاسم والرقم والتوقيع من «اعتماد بواسطة»." : "e.g. sevenn.om — shown on invoices and quotations. Name, phone and signature come from “Approved by”."}>
           <div className="px-4 py-2.5">
             <input className={fieldCls} dir="ltr" value={v.quote_contact_link} onChange={(e) => setV({ ...v, quote_contact_link: e.target.value })} placeholder="sevenn.om" />
           </div>
